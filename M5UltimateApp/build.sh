@@ -21,7 +21,7 @@ mkdir -p "$APP_DIR/Contents/Resources/payloads/llama"
 mkdir -p "$APP_DIR/Contents/Resources/payloads/mlx"
 
 cp -f ../llama.cpp/build/bin/llama-server "$APP_DIR/Contents/Resources/payloads/llama/" 2>/dev/null || true
-cp -f ../llama.cpp/build/bin/libggml-metal.dylib "$APP_DIR/Contents/Resources/payloads/llama/" 2>/dev/null || true
+cp -f ../llama.cpp/build/bin/lib*.dylib "$APP_DIR/Contents/Resources/payloads/llama/" 2>/dev/null || true
 cp -f ../mlx/python/mlx/lib/mlx.metallib "$APP_DIR/Contents/Resources/payloads/mlx/" 2>/dev/null || true
 cp -f ../mlx/python/mlx/lib/libmlx.dylib "$APP_DIR/Contents/Resources/payloads/mlx/" 2>/dev/null || true
 

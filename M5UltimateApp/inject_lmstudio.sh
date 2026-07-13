@@ -49,18 +49,26 @@ if [ ! -z "$LATEST_LLAMA_SERVER" ]; then
 # This script intercepts LM Studio's call to llama-server.
 
 ORIGINAL_SERVER="${0}.orig"
+CUSTOM_SERVER="/Applications/M5 Ultimate.app/Contents/Resources/payloads/llama/llama-server"
+CUSTOM_METAL_DIR="/Applications/M5 Ultimate.app/Contents/Resources/payloads/llama"
 
 # Here you can inject your ANE logic, set environment variables,
 # or even redirect the execution to your custom ANE-compiled llama-server!
 
-# For now, we pass the execution to the original server but with our environment.
-# Since this is a standard bash execution, SIP and Hardened Runtime won't block it.
 export M5_ANE_ENABLED="1"
+export GGML_METAL_PATH_RESOURCES="$CUSTOM_METAL_DIR"
+export DYLD_LIBRARY_PATH="$CUSTOM_METAL_DIR:$DYLD_LIBRARY_PATH"
 
 echo "[M5 Proxy] Intercepted llama-server launch!" > /tmp/m5_proxy.log
 echo "[M5 Proxy] Args: $@" >> /tmp/m5_proxy.log
 
-exec "$ORIGINAL_SERVER" "$@"
+if [ -x "$CUSTOM_SERVER" ]; then
+    echo "[M5 Proxy] Redirecting to custom ANE llama-server..." >> /tmp/m5_proxy.log
+    exec "$CUSTOM_SERVER" "$@"
+else
+    echo "[M5 Proxy] Custom server not found! Falling back to original..." >> /tmp/m5_proxy.log
+    exec "$ORIGINAL_SERVER" "$@"
+fi
 EOF
 
     chmod +x "$LATEST_LLAMA_SERVER"
