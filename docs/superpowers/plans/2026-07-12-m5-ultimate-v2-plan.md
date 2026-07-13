@@ -11,20 +11,20 @@
 ### Task 1: Setup V2 Project Structure & Remove Legacy Injection Code
 
 **Files:**
-- Modify: `M5UltimateV2/build.sh`
-- Create: `M5UltimateV2/start_server.sh`
-- Delete: `M5UltimateV2/inject_lmstudio.sh` (if exists)
+- Modify: `UltimateLLMStudio/build.sh`
+- Create: `UltimateLLMStudio/start_server.sh`
+- Delete: `UltimateLLMStudio/inject_lmstudio.sh` (if exists)
 
 - [ ] **Step 1: Clean legacy code**
 ```bash
-cd M5UltimateV2
+cd UltimateLLMStudio
 rm -f inject_lmstudio.sh
 ```
 
 - [ ] **Step 2: Update build script**
-Modify `M5UltimateV2/build.sh` to package `start_server.sh` instead of injection payloads.
+Modify `UltimateLLMStudio/build.sh` to package `start_server.sh` instead of injection payloads.
 ```bash
-# In M5UltimateV2/build.sh
+# In UltimateLLMStudio/build.sh
 # Replace injection copying with:
 cp start_server.sh "$RESOURCES_DIR/"
 chmod +x "$RESOURCES_DIR/start_server.sh"
@@ -32,7 +32,7 @@ chmod +x "$RESOURCES_DIR/start_server.sh"
 
 - [ ] **Step 3: Create Server Launcher Script**
 ```bash
-cat << 'EOF' > M5UltimateV2/start_server.sh
+cat << 'EOF' > UltimateLLMStudio/start_server.sh
 #!/bin/bash
 # Spawns the local API server with Metal Interceptor
 
@@ -50,19 +50,19 @@ elif [ "$ENGINE_TYPE" == "MLX" ]; then
     python3 -m mlx_server --model "$MODEL_PATH" --port 1234
 fi
 EOF
-chmod +x M5UltimateV2/start_server.sh
+chmod +x UltimateLLMStudio/start_server.sh
 ```
 
 - [ ] **Step 4: Commit**
 ```bash
-git add M5UltimateV2/build.sh M5UltimateV2/start_server.sh
+git add UltimateLLMStudio/build.sh UltimateLLMStudio/start_server.sh
 git commit -m "chore: setup v2 server launcher and remove legacy injection"
 ```
 
 ### Task 2: Implement 3-Pane SwiftUI Architecture
 
 **Files:**
-- Modify: `M5UltimateV2/App.swift`
+- Modify: `UltimateLLMStudio/App.swift`
 
 - [ ] **Step 1: Define UI Layout**
 Replace the current single-view UI with an `HSplitView` or `NavigationSplitView`.
@@ -114,14 +114,14 @@ struct ContentView: View {
 
 - [ ] **Step 2: Commit**
 ```bash
-git add M5UltimateV2/App.swift
+git add UltimateLLMStudio/App.swift
 git commit -m "feat: implement 3-pane ui architecture for v2"
 ```
 
 ### Task 3: Local Model Scanner
 
 **Files:**
-- Modify: `M5UltimateV2/App.swift`
+- Modify: `UltimateLLMStudio/App.swift`
 
 - [ ] **Step 1: Implement File Scanning**
 Add a function to scan `~/.lmstudio/models`.
@@ -148,6 +148,6 @@ Bind the scanned models to the Left Column list.
 
 - [ ] **Step 3: Commit**
 ```bash
-git add M5UltimateV2/App.swift
+git add UltimateLLMStudio/App.swift
 git commit -m "feat: add local model discovery for lmstudio folder"
 ```
