@@ -1,0 +1,44 @@
+# ==========================================
+# M5 ULTIMATE - ROOT GITIGNORE
+# ==========================================
+
+# 1. macOS System Files
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+
+# 2. Build Artifacts & Compiled Binaries (THE HEAVY STUFF)
+build/
+*.app/
+*.o
+*.dylib
+*.metallib
+*.out
+*.log
+
+# 3. Third-Party Apps & Heavy Dependencies
+lmstd/
+saves/
+node_modules/
+
+# 4. Large Submodules / External Frameworks
+llama.cpp/
+mlx/
+m1n1/
+Lokum-f/
+ANE-main/
+MI/
+insert_dylib/
+system_wide_tests/
+saves/
+payloads/
+
+# 5. Caches
+.cache/
+__pycache__/
+*.pyc
+
+# 6. M5 Ultimate Specific Ignores
+/tmp/m5_*.log
+/tmp/m5_*.command

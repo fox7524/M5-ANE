@@ -1,0 +1,3 @@
+- [x] GPU Stress Tester correctly compiles and executes, showing real-time TFLOPS output.
+- [x] Metal Interceptor (`libmetal_interceptor.dylib`) successfully compiles.
+- [x] Metal Interceptor can be injected via `DYLD_INSERT_LIBRARIES` and logs its presence when a Metal app runs.
