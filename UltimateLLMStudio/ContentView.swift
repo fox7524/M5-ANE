@@ -126,9 +126,15 @@ struct ContentView: View {
                 .background(Color.white.opacity(0.05))
                 .cornerRadius(10)
                 
-                // TODO: (USER TASK)
-                // Add a ScrollView here that contains a Text view showing `backend.serverLogs`
-                // This will let us see the output of the LLM server in real-time!
+                // Server Logs View
+                ScrollView {
+                    Text(backend.serverLogs)
+                        .font(.system(.caption, design: .monospaced))
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding()
+                }
+                .background(Color.black.opacity(0.5))
+                .cornerRadius(8)
                 
                 Spacer()
             }
@@ -138,11 +144,16 @@ struct ContentView: View {
     }
     
     func startServer() {
-        // TODO: (USER TASK)
-        // 1. Check if backend.isServerRunning is true. If so, call backend.stopLLMServer()
-        // 2. Otherwise, check if selectedModel is not nil.
-        // 3. If a model is selected, call backend.startLLMServer(modelPath: selectedModel!)
-        print("User needs to implement startServer() logic!")
+        if backend.isServerRunning {
+            backend.stopLLMServer()
+        } else {
+            // Check if the user selected a model
+            if let model = selectedModel {
+                backend.startLLMServer(modelPath: model)
+            } else {
+                print("Please select a model from the list first!")
+            }
+        }
     }
     
     func updateSplitRatio(_ value: Double) {
