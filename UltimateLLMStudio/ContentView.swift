@@ -1,8 +1,11 @@
 import SwiftUI
 
 struct ContentView: View {
+    @ObservedObject var backend = BackendManager.shared
+    
     @State private var splitRatio: Double = 68.0
     @State private var localModels: [String] = []
+    @State private var selectedModel: String?
     
     // Chat state
     @State private var chatText: String = ""
@@ -15,14 +18,14 @@ struct ContentView: View {
     var body: some View {
         NavigationSplitView {
             // Left: Discovery
-            List {
+            List(selection: $selectedModel) {
                 Section(header: Text("Local Models")) {
                     if localModels.isEmpty {
                         Text("No models found")
                             .foregroundColor(.gray)
                     } else {
                         ForEach(localModels, id: \.self) { model in
-                            Text(model)
+                            Text(model).tag(model)
                         }
                     }
                 }
@@ -36,14 +39,14 @@ struct ContentView: View {
             VStack(spacing: 0) {
                 // Top Toolbar Area
                 HStack {
-                    Text("Engine: Stopped")
+                    Text(backend.isServerRunning ? "Engine: Running" : "Engine: Stopped")
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(backend.isServerRunning ? .green : .secondary)
                     Spacer()
                     Button(action: {
                         startServer()
                     }) {
-                        Label("Start Local Server", systemImage: "play.fill")
+                        Label(backend.isServerRunning ? "Stop Server" : "Start Local Server", systemImage: backend.isServerRunning ? "stop.fill" : "play.fill")
                     }
                     .buttonStyle(.bordered)
                     .controlSize(.small)
@@ -123,6 +126,10 @@ struct ContentView: View {
                 .background(Color.white.opacity(0.05))
                 .cornerRadius(10)
                 
+                // TODO: (USER TASK)
+                // Add a ScrollView here that contains a Text view showing `backend.serverLogs`
+                // This will let us see the output of the LLM server in real-time!
+                
                 Spacer()
             }
             .padding()
@@ -131,8 +138,11 @@ struct ContentView: View {
     }
     
     func startServer() {
-        // NSTask / Process execution for start_server.sh
-        print("Starting local server...")
+        // TODO: (USER TASK)
+        // 1. Check if backend.isServerRunning is true. If so, call backend.stopLLMServer()
+        // 2. Otherwise, check if selectedModel is not nil.
+        // 3. If a model is selected, call backend.startLLMServer(modelPath: selectedModel!)
+        print("User needs to implement startServer() logic!")
     }
     
     func updateSplitRatio(_ value: Double) {

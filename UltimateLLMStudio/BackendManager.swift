@@ -25,6 +25,14 @@ class BackendManager: ObservableObject {
     }
     
     @Published var currentPowerW: Double = 0.0
+    
+    // Server state
+    @Published var isServerRunning: Bool = false
+    @Published var serverLogs: String = ""
+    
+    private var serverTask: Process?
+    private var serverPipe: Pipe?
+    
     private var powerTimer: Timer?
     private var stressTask: Process?
     private var powerMetricsTask: Process?
@@ -127,7 +135,69 @@ class BackendManager: ObservableObject {
         return stressTask != nil && stressTask!.isRunning
     }
     
+    // MARK: - LLM Server Integration
+    func startLLMServer(modelPath: String, engineType: String = "GGUF") {
+        guard !isServerRunning else { return }
+        
+        let scriptPath = Bundle.main.bundlePath + "/Contents/Resources/start_server.sh"
+        let fallbackPath = "/Users/fox/Documents/PROJECTS/M5/UltimateLLMStudio/start_server.sh"
+        let executablePath = FileManager.default.fileExists(atPath: scriptPath) ? scriptPath : fallbackPath
+        
+        let task = Process()
+        task.executableURL = URL(fileURLWithPath: "/bin/bash")
+        task.arguments = [executablePath, engineType, modelPath]
+        
+        let pipe = Pipe()
+        task.standardOutput = pipe
+        task.standardError = pipe
+        
+        self.serverPipe = pipe
+        self.serverTask = task
+        
+        DispatchQueue.main.async {
+            self.isServerRunning = true
+            self.serverLogs = "Starting server with model: \(modelPath)...\n"
+        }
+        
+        DispatchQueue.global(qos: .background).async { [weak self] in
+            let fileHandle = pipe.fileHandleForReading
+            fileHandle.readabilityHandler = { handle in
+                let availableData = handle.availableData
+                if availableData.count > 0 {
+                    if let str = String(data: availableData, encoding: .utf8) {
+                        DispatchQueue.main.async {
+                            self?.serverLogs += str
+                        }
+                    }
+                }
+            }
+            
+            do {
+                try task.run()
+                task.terminationHandler = { [weak self] process in
+                    DispatchQueue.main.async {
+                        self?.isServerRunning = false
+                        self?.serverLogs += "\nServer stopped (Exit code: \(process.terminationStatus)).\n"
+                    }
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    self?.isServerRunning = false
+                    self?.serverLogs += "\nFailed to start server: \(error.localizedDescription)\n"
+                }
+            }
+        }
+    }
+    
+    func stopLLMServer() {
+        if let st = serverTask, st.isRunning {
+            st.terminate()
+        }
+        serverTask = nil
+    }
+    
     func cleanupAndExit() {
+        stopLLMServer()
         if let st = stressTask, st.isRunning {
             st.terminate()
         }
