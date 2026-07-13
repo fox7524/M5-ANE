@@ -156,7 +156,9 @@ class BackendManager: ObservableObject {
         
         DispatchQueue.main.async {
             self.isServerRunning = true
-            self.serverLogs = "Starting server with model: \(modelPath)...\n"
+            self.serverLogs = "🚀 Starting Neural Engine offloading...\n"
+            self.serverLogs += "Model: \(modelPath)\n"
+            self.serverLogs += "Port: 1234\n"
         }
         
         DispatchQueue.global(qos: .background).async { [weak self] in

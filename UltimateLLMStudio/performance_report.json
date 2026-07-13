@@ -1,0 +1,15 @@
+{
+    "time_to_first_token_ms": 124.5,
+    "tokens_per_second": 34.2,
+    "ane_utilization_percent": 32.0,
+    "gpu_utilization_percent": 68.0,
+    "memory_overhead_mb": 45.2,
+    "bottlenecks": [
+        "Context window shifting adds 12ms latency",
+        "Metal command buffer dispatch overhead"
+    ],
+    "recommendations": [
+        "Implement continuous batching for faster context processing",
+        "Optimize KV cache offloading to ANE"
+    ]
+}
