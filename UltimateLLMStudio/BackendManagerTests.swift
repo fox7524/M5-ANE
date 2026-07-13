@@ -1,5 +1,5 @@
 import XCTest
-@testable import M5Ultimate
+@testable import UltimateLLMStudio
 
 class BackendManagerTests: XCTestCase {
     func testServerStartAndStop() {

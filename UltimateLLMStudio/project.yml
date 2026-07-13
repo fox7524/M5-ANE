@@ -5,19 +5,67 @@ targets:
   UltimateLLMStudio:
     type: application
     platform: macOS
-    deploymentTarget: "13.0"
+    deploymentTarget: "14.0"
     sources:
       - path: .
         includes:
           - App.swift
           - ContentView.swift
           - BackendManager.swift
+          - ModelScanner.swift
           - M5UltimateWrapper.mm
           - M5UltimateWrapper.h
+          - LLMEngine.mm
+          - LLMEngine.h
           - M5Ultimate-Bridging-Header.h
           - AppIcon.icns
           - start_server.sh
+          - ane_bridge.m
+          - ane_bridge.h
+    dependencies:
+      - framework: ../llama.cpp/build/bin/libllama.0.0.1.dylib
+        embed: true
+      - framework: ../llama.cpp/build/bin/libggml.0.16.0.dylib
+        embed: true
+      - framework: ../llama.cpp/build/bin/libggml-metal.0.16.0.dylib
+        embed: true
+      - framework: ../llama.cpp/build/bin/libggml-cpu.0.16.0.dylib
+        embed: true
+      - framework: ../llama.cpp/build/bin/libggml-base.0.16.0.dylib
+        embed: true
+      - framework: ../llama.cpp/build/bin/libllama-common.0.0.1.dylib
+        embed: true
+      - sdk: Accelerate.framework
+      - sdk: Metal.framework
+      - sdk: MetalPerformanceShaders.framework
+      - sdk: CoreGraphics.framework
     settings:
       base:
+        HEADER_SEARCH_PATHS: 
+          - ../llama.cpp/include
+          - ../llama.cpp/ggml/include
+          - ../llama.cpp/common
+        LIBRARY_SEARCH_PATHS: 
+          - ../llama.cpp/build/bin
+        LD_RUNPATH_SEARCH_PATHS: "@executable_path/../Frameworks"
         SWIFT_OBJC_BRIDGING_HEADER: M5Ultimate-Bridging-Header.h
         ENABLE_HARDENED_RUNTIME: NO
+        INFOPLIST_FILE: ""
+        GENERATE_INFOPLIST_FILE: "YES"
+
+  UltimateLLMStudioTests:
+    type: bundle.unit-test
+    platform: macOS
+    deploymentTarget: "14.0"
+    dependencies:
+      - target: UltimateLLMStudio
+    sources:
+      - path: .
+        includes:
+          - BackendManagerTests.swift
+          - ModelScannerTests.swift
+    settings:
+      base:
+        INFOPLIST_FILE: ""
+        GENERATE_INFOPLIST_FILE: "YES"
+

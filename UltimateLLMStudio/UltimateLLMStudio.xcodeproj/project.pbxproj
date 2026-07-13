@@ -9,29 +9,118 @@
 /* Begin PBXBuildFile section */
 		10289656094CB73B67DE51F0 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E91B1AF93A9113907CE8A0C2 /* ContentView.swift */; };
 		1AD5147B1808658049EF2B8D /* BackendManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1579093AC4C19C7FE13230B0 /* BackendManager.swift */; };
+		1EE43CD0328106A4CA73679C /* libggml.0.16.0.dylib in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 11EA9A907C41A0A4E8ED72B8 /* libggml.0.16.0.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		2D5AA11758E8097A44FB66CC /* AppIcon.icns in Resources */ = {isa = PBXBuildFile; fileRef = 378E3F393934F0AEB386BE93 /* AppIcon.icns */; };
+		3BCA36FA0B86F4BB44DD8B66 /* libggml-metal.0.16.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 7E98696607472A3F7E457062 /* libggml-metal.0.16.0.dylib */; };
+		3D431220A6B85D27AEA643D5 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 997E820AE2B8BEDD085A64F0 /* CoreGraphics.framework */; };
+		492D316CB0B6CFA7A2BACDC0 /* libggml.0.16.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 11EA9A907C41A0A4E8ED72B8 /* libggml.0.16.0.dylib */; };
 		5B393AC4F855F6A7AB4ED55E /* M5UltimateWrapper.mm in Sources */ = {isa = PBXBuildFile; fileRef = C46D74CA7DA7146B5CB5AEC0 /* M5UltimateWrapper.mm */; };
+		5FFD900D387AEA9CE0A29274 /* ModelScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 638663796034C87EAA2B9937 /* ModelScanner.swift */; };
+		62115003FDAB40443B7671D4 /* libggml-base.0.16.0.dylib in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 1CCE83D486C69F7FBAE32315 /* libggml-base.0.16.0.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		71F3C4A20DEA161CB1B74C23 /* start_server.sh in Resources */ = {isa = PBXBuildFile; fileRef = 8FA714662773E6D5B88CFB22 /* start_server.sh */; };
+		77EC0170F4AD6524CD774F8A /* ModelScannerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BE42ECC63429911298D602B /* ModelScannerTests.swift */; };
+		84EADA495A584BF4392F4AEE /* libllama.0.0.1.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 5D4AA63B8DA0071B9E075D99 /* libllama.0.0.1.dylib */; };
+		85CA96245AECDD84665F8BFD /* libggml-cpu.0.16.0.dylib in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 9226D03C76317B31AAAA40E9 /* libggml-cpu.0.16.0.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		AF65F1629D441617BE34E864 /* BackendManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F011FAF4B893BA2D58287CB /* BackendManagerTests.swift */; };
+		B408C065CFB69D9E1C63F5C1 /* MetalPerformanceShaders.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3D9B9CFDDFD1C24FDE0FA7D0 /* MetalPerformanceShaders.framework */; };
 		C1D296C21E60C25F37E8EB5D /* App.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24222CEF5DFD5368B1C67AEA /* App.swift */; };
+		CDBE2F43DD5CD3FFC5CF5416 /* libggml-base.0.16.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 1CCE83D486C69F7FBAE32315 /* libggml-base.0.16.0.dylib */; };
+		D3E0B50A270678F4C56681DC /* libllama-common.0.0.1.dylib in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = D3325D9A26204A1051AC1766 /* libllama-common.0.0.1.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		DA61545ADEC023924544EC5A /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8DD396879BD4A315A9BB5555 /* Accelerate.framework */; };
+		DD38B2F0B2BA657FA448B1FE /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 82606118BE61508721CA4FC3 /* Metal.framework */; };
+		DF8D0236EEA6BE56A5C2B1A6 /* libggml-metal.0.16.0.dylib in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 7E98696607472A3F7E457062 /* libggml-metal.0.16.0.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		E5044EBFBCE1C761792C59AB /* libggml-cpu.0.16.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 9226D03C76317B31AAAA40E9 /* libggml-cpu.0.16.0.dylib */; };
+		EDD519C91E76A4514874E0FF /* libllama-common.0.0.1.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = D3325D9A26204A1051AC1766 /* libllama-common.0.0.1.dylib */; };
+		F3365530159F8F7EA5EA909B /* ane_bridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 51ED881856183B770C1EFAEA /* ane_bridge.m */; };
+		F40B68E62D3EDBC4D06BF422 /* libllama.0.0.1.dylib in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 5D4AA63B8DA0071B9E075D99 /* libllama.0.0.1.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		FFD13E5D81D3BBD161BE0F00 /* LLMEngine.mm in Sources */ = {isa = PBXBuildFile; fileRef = E0503F10160416DE0CA4F6F9 /* LLMEngine.mm */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		1751C573EEBE6ACACE2A6F6B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 27A562A43D786BA583BDEADA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = D1140D02ADBC9E3E44A089DA;
+			remoteInfo = UltimateLLMStudio;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		5C4F65562C762EDF3CD53CD9 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				F40B68E62D3EDBC4D06BF422 /* libllama.0.0.1.dylib in Embed Frameworks */,
+				1EE43CD0328106A4CA73679C /* libggml.0.16.0.dylib in Embed Frameworks */,
+				DF8D0236EEA6BE56A5C2B1A6 /* libggml-metal.0.16.0.dylib in Embed Frameworks */,
+				85CA96245AECDD84665F8BFD /* libggml-cpu.0.16.0.dylib in Embed Frameworks */,
+				62115003FDAB40443B7671D4 /* libggml-base.0.16.0.dylib in Embed Frameworks */,
+				D3E0B50A270678F4C56681DC /* libllama-common.0.0.1.dylib in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		05215C0CE56A693101DFBDAC /* UltimateLLMStudioTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = UltimateLLMStudioTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		0F011FAF4B893BA2D58287CB /* BackendManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackendManagerTests.swift; sourceTree = "<group>"; };
+		11EA9A907C41A0A4E8ED72B8 /* libggml.0.16.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libggml.0.16.0.dylib; path = ../llama.cpp/build/bin/libggml.0.16.0.dylib; sourceTree = "<group>"; };
 		1579093AC4C19C7FE13230B0 /* BackendManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackendManager.swift; sourceTree = "<group>"; };
+		1BE42ECC63429911298D602B /* ModelScannerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelScannerTests.swift; sourceTree = "<group>"; };
+		1CCE83D486C69F7FBAE32315 /* libggml-base.0.16.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = "libggml-base.0.16.0.dylib"; path = "../llama.cpp/build/bin/libggml-base.0.16.0.dylib"; sourceTree = "<group>"; };
 		24222CEF5DFD5368B1C67AEA /* App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App.swift; sourceTree = "<group>"; };
+		257D30C3A6761E4D4E3FDC94 /* LLMEngine.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LLMEngine.h; sourceTree = "<group>"; };
 		378E3F393934F0AEB386BE93 /* AppIcon.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = AppIcon.icns; sourceTree = "<group>"; };
+		3D9B9CFDDFD1C24FDE0FA7D0 /* MetalPerformanceShaders.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalPerformanceShaders.framework; path = System/Library/Frameworks/MetalPerformanceShaders.framework; sourceTree = SDKROOT; };
 		48DC7D8660FC209267AE0DE8 /* M5Ultimate-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "M5Ultimate-Bridging-Header.h"; sourceTree = "<group>"; };
 		4CFE57853C2A7C7BB3FE6EF0 /* M5UltimateWrapper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = M5UltimateWrapper.h; sourceTree = "<group>"; };
+		51ED881856183B770C1EFAEA /* ane_bridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ane_bridge.m; sourceTree = "<group>"; };
+		5D4AA63B8DA0071B9E075D99 /* libllama.0.0.1.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libllama.0.0.1.dylib; path = ../llama.cpp/build/bin/libllama.0.0.1.dylib; sourceTree = "<group>"; };
+		638663796034C87EAA2B9937 /* ModelScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelScanner.swift; sourceTree = "<group>"; };
 		79F47B971C366AA669107CE6 /* UltimateLLMStudio.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = UltimateLLMStudio.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		7E98696607472A3F7E457062 /* libggml-metal.0.16.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = "libggml-metal.0.16.0.dylib"; path = "../llama.cpp/build/bin/libggml-metal.0.16.0.dylib"; sourceTree = "<group>"; };
+		82606118BE61508721CA4FC3 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
+		8DD396879BD4A315A9BB5555 /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
 		8FA714662773E6D5B88CFB22 /* start_server.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = start_server.sh; sourceTree = "<group>"; };
+		9226D03C76317B31AAAA40E9 /* libggml-cpu.0.16.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = "libggml-cpu.0.16.0.dylib"; path = "../llama.cpp/build/bin/libggml-cpu.0.16.0.dylib"; sourceTree = "<group>"; };
+		997E820AE2B8BEDD085A64F0 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
+		AED09D9EF478FE9415BA8A5C /* ane_bridge.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ane_bridge.h; sourceTree = "<group>"; };
 		C46D74CA7DA7146B5CB5AEC0 /* M5UltimateWrapper.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = M5UltimateWrapper.mm; sourceTree = "<group>"; };
+		D3325D9A26204A1051AC1766 /* libllama-common.0.0.1.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = "libllama-common.0.0.1.dylib"; path = "../llama.cpp/build/bin/libllama-common.0.0.1.dylib"; sourceTree = "<group>"; };
+		E0503F10160416DE0CA4F6F9 /* LLMEngine.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = LLMEngine.mm; sourceTree = "<group>"; };
 		E91B1AF93A9113907CE8A0C2 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		98022709675B790854A5FA1C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				84EADA495A584BF4392F4AEE /* libllama.0.0.1.dylib in Frameworks */,
+				492D316CB0B6CFA7A2BACDC0 /* libggml.0.16.0.dylib in Frameworks */,
+				3BCA36FA0B86F4BB44DD8B66 /* libggml-metal.0.16.0.dylib in Frameworks */,
+				E5044EBFBCE1C761792C59AB /* libggml-cpu.0.16.0.dylib in Frameworks */,
+				CDBE2F43DD5CD3FFC5CF5416 /* libggml-base.0.16.0.dylib in Frameworks */,
+				EDD519C91E76A4514874E0FF /* libllama-common.0.0.1.dylib in Frameworks */,
+				DA61545ADEC023924544EC5A /* Accelerate.framework in Frameworks */,
+				DD38B2F0B2BA657FA448B1FE /* Metal.framework in Frameworks */,
+				B408C065CFB69D9E1C63F5C1 /* MetalPerformanceShaders.framework in Frameworks */,
+				3D431220A6B85D27AEA643D5 /* CoreGraphics.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		1D53C6FA973CD3FDB6377D68 = {
 			isa = PBXGroup;
 			children = (
 				98862D6AB424D267028FD849 /* UltimateLLMStudio */,
+				EFF3857BBA57D6AFE3EB2660 /* Frameworks */,
 				8C0FB7024469D279BBE88EAD /* Products */,
 			);
 			sourceTree = "<group>";
@@ -40,6 +129,7 @@
 			isa = PBXGroup;
 			children = (
 				79F47B971C366AA669107CE6 /* UltimateLLMStudio.app */,
+				05215C0CE56A693101DFBDAC /* UltimateLLMStudioTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -47,28 +137,72 @@
 		98862D6AB424D267028FD849 /* UltimateLLMStudio */ = {
 			isa = PBXGroup;
 			children = (
+				AED09D9EF478FE9415BA8A5C /* ane_bridge.h */,
+				51ED881856183B770C1EFAEA /* ane_bridge.m */,
 				24222CEF5DFD5368B1C67AEA /* App.swift */,
 				378E3F393934F0AEB386BE93 /* AppIcon.icns */,
 				1579093AC4C19C7FE13230B0 /* BackendManager.swift */,
+				0F011FAF4B893BA2D58287CB /* BackendManagerTests.swift */,
 				E91B1AF93A9113907CE8A0C2 /* ContentView.swift */,
+				257D30C3A6761E4D4E3FDC94 /* LLMEngine.h */,
+				E0503F10160416DE0CA4F6F9 /* LLMEngine.mm */,
 				48DC7D8660FC209267AE0DE8 /* M5Ultimate-Bridging-Header.h */,
 				4CFE57853C2A7C7BB3FE6EF0 /* M5UltimateWrapper.h */,
 				C46D74CA7DA7146B5CB5AEC0 /* M5UltimateWrapper.mm */,
+				638663796034C87EAA2B9937 /* ModelScanner.swift */,
+				1BE42ECC63429911298D602B /* ModelScannerTests.swift */,
 				8FA714662773E6D5B88CFB22 /* start_server.sh */,
 			);
 			name = UltimateLLMStudio;
 			path = .;
 			sourceTree = "<group>";
 		};
+		EFF3857BBA57D6AFE3EB2660 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				8DD396879BD4A315A9BB5555 /* Accelerate.framework */,
+				997E820AE2B8BEDD085A64F0 /* CoreGraphics.framework */,
+				1CCE83D486C69F7FBAE32315 /* libggml-base.0.16.0.dylib */,
+				9226D03C76317B31AAAA40E9 /* libggml-cpu.0.16.0.dylib */,
+				7E98696607472A3F7E457062 /* libggml-metal.0.16.0.dylib */,
+				11EA9A907C41A0A4E8ED72B8 /* libggml.0.16.0.dylib */,
+				D3325D9A26204A1051AC1766 /* libllama-common.0.0.1.dylib */,
+				5D4AA63B8DA0071B9E075D99 /* libllama.0.0.1.dylib */,
+				82606118BE61508721CA4FC3 /* Metal.framework */,
+				3D9B9CFDDFD1C24FDE0FA7D0 /* MetalPerformanceShaders.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		7DE35B4A4D0F7BAD7330D8D7 /* UltimateLLMStudioTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5CCC68DED42E8FBB0BE88D68 /* Build configuration list for PBXNativeTarget "UltimateLLMStudioTests" */;
+			buildPhases = (
+				00C9730CA6056A1541135FEE /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				1A9EAF2CFCD36A12AF88518A /* PBXTargetDependency */,
+			);
+			name = UltimateLLMStudioTests;
+			packageProductDependencies = (
+			);
+			productName = UltimateLLMStudioTests;
+			productReference = 05215C0CE56A693101DFBDAC /* UltimateLLMStudioTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		D1140D02ADBC9E3E44A089DA /* UltimateLLMStudio */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 0B6F9170B1D4EF63EAAA73D7 /* Build configuration list for PBXNativeTarget "UltimateLLMStudio" */;
 			buildPhases = (
 				8E792BB851C671930509889C /* Sources */,
 				61CF26E77EDE96B5A366C86B /* Resources */,
+				98022709675B790854A5FA1C /* Frameworks */,
+				5C4F65562C762EDF3CD53CD9 /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
@@ -107,6 +241,7 @@
 			projectRoot = "";
 			targets = (
 				D1140D02ADBC9E3E44A089DA /* UltimateLLMStudio */,
+				7DE35B4A4D0F7BAD7330D8D7 /* UltimateLLMStudioTests */,
 			);
 		};
 /* End PBXProject section */
@@ -124,6 +259,15 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		00C9730CA6056A1541135FEE /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF65F1629D441617BE34E864 /* BackendManagerTests.swift in Sources */,
+				77EC0170F4AD6524CD774F8A /* ModelScannerTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		8E792BB851C671930509889C /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -131,13 +275,43 @@
 				C1D296C21E60C25F37E8EB5D /* App.swift in Sources */,
 				1AD5147B1808658049EF2B8D /* BackendManager.swift in Sources */,
 				10289656094CB73B67DE51F0 /* ContentView.swift in Sources */,
+				FFD13E5D81D3BBD161BE0F00 /* LLMEngine.mm in Sources */,
 				5B393AC4F855F6A7AB4ED55E /* M5UltimateWrapper.mm in Sources */,
+				5FFD900D387AEA9CE0A29274 /* ModelScanner.swift in Sources */,
+				F3365530159F8F7EA5EA909B /* ane_bridge.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		1A9EAF2CFCD36A12AF88518A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = D1140D02ADBC9E3E44A089DA /* UltimateLLMStudio */;
+			targetProxy = 1751C573EEBE6ACACE2A6F6B /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		092564F158A1B4CB42BA4BF7 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.fox.UltimateLLMStudioTests;
+				SDKROOT = macosx;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/UltimateLLMStudio.app/Contents/MacOS/UltimateLLMStudio";
+			};
+			name = Debug;
+		};
 		4BC8C7C177498DD3825BF1A4 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -200,18 +374,47 @@
 			};
 			name = Debug;
 		};
+		63D68F3CC4765AFDC99CAFBE /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.fox.UltimateLLMStudioTests;
+				SDKROOT = macosx;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/UltimateLLMStudio.app/Contents/MacOS/UltimateLLMStudio";
+			};
+			name = Release;
+		};
 		79D3B8B79273F6DD29234536 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				COMBINE_HIDPI_IMAGES = YES;
 				ENABLE_HARDENED_RUNTIME = NO;
-				INFOPLIST_FILE = "build/M5 Ultimate.app/Contents/Info.plist";
-				LD_RUNPATH_SEARCH_PATHS = (
+				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
-					"@executable_path/../Frameworks",
+					"\"../llama.cpp/build/bin\"",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				GENERATE_INFOPLIST_FILE = YES;
+				HEADER_SEARCH_PATHS = (
+					../llama.cpp/include,
+					../llama.cpp/ggml/include,
+					../llama.cpp/common,
+				);
+				INFOPLIST_FILE = "";
+				LD_RUNPATH_SEARCH_PATHS = "@executable_path/../Frameworks";
+				LIBRARY_SEARCH_PATHS = (
+					../llama.cpp/build/bin,
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.fox.UltimateLLMStudio;
 				SDKROOT = macosx;
 				SWIFT_OBJC_BRIDGING_HEADER = "M5Ultimate-Bridging-Header.h";
@@ -224,12 +427,22 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				COMBINE_HIDPI_IMAGES = YES;
 				ENABLE_HARDENED_RUNTIME = NO;
-				INFOPLIST_FILE = "build/M5 Ultimate.app/Contents/Info.plist";
-				LD_RUNPATH_SEARCH_PATHS = (
+				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
-					"@executable_path/../Frameworks",
+					"\"../llama.cpp/build/bin\"",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				GENERATE_INFOPLIST_FILE = YES;
+				HEADER_SEARCH_PATHS = (
+					../llama.cpp/include,
+					../llama.cpp/ggml/include,
+					../llama.cpp/common,
+				);
+				INFOPLIST_FILE = "";
+				LD_RUNPATH_SEARCH_PATHS = "@executable_path/../Frameworks";
+				LIBRARY_SEARCH_PATHS = (
+					../llama.cpp/build/bin,
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.fox.UltimateLLMStudio;
 				SDKROOT = macosx;
 				SWIFT_OBJC_BRIDGING_HEADER = "M5Ultimate-Bridging-Header.h";
@@ -299,6 +512,15 @@
 			buildConfigurations = (
 				79D3B8B79273F6DD29234536 /* Debug */,
 				F8BC73D5085C6590EE19282A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		5CCC68DED42E8FBB0BE88D68 /* Build configuration list for PBXNativeTarget "UltimateLLMStudioTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				092564F158A1B4CB42BA4BF7 /* Debug */,
+				63D68F3CC4765AFDC99CAFBE /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

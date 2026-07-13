@@ -30,8 +30,7 @@ class BackendManager: ObservableObject {
     @Published var isServerRunning: Bool = false
     @Published var serverLogs: String = ""
     
-    private var serverTask: Process?
-    private var serverPipe: Pipe?
+    private let engine = LLMEngine()
     
     private var powerTimer: Timer?
     private var stressTask: Process?
@@ -136,87 +135,33 @@ class BackendManager: ObservableObject {
     }
     
     // MARK: - LLM Server Integration
-    func startLLMServer(modelPath: String, engineType: String = "GGUF") {
+    func startLLMServer(modelPath: String, engineType: String = "GGUF", gpuLayers: Int = 32) {
         guard !isServerRunning else { return }
         
-        // Find llama-server binary in the app bundle
-        let bundlePath = Bundle.main.bundlePath
-        let llamaServerPath = bundlePath + "/Contents/Resources/payloads/llama/llama-server"
-        let fallbackLlamaServer = "/Users/fox/Documents/PROJECTS/M5/llama.cpp/build/bin/llama-server"
-        let executablePath = FileManager.default.fileExists(atPath: llamaServerPath) ? llamaServerPath : fallbackLlamaServer
+        serverLogs += "🚀 Loading model via Objective-C++ Engine...\n"
+        serverLogs += "Model: \(modelPath)\n"
         
-        // Find libmetal_interceptor.dylib
-        let interceptorPath = bundlePath + "/Contents/Resources/libmetal_interceptor.dylib"
-        let fallbackInterceptor = "/Users/fox/Documents/PROJECTS/M5/UltimateLLMStudio/libmetal_interceptor.dylib"
-        let dylibPath = FileManager.default.fileExists(atPath: interceptorPath) ? interceptorPath : fallbackInterceptor
-        
-        let task = Process()
-        task.executableURL = URL(fileURLWithPath: executablePath)
-        
-        // Add required arguments for llama-server
-        task.arguments = [
-            "-m", modelPath,
-            "--port", "1234",
-            "-c", "4096", // Context window
-            "-ngl", "99"  // Offload all layers
-        ]
-        
-        // Setup Environment for Metal Interceptor
-        var env = ProcessInfo.processInfo.environment
-        env["DYLD_INSERT_LIBRARIES"] = dylibPath
-        env["GGML_METAL_PATH_RESOURCES"] = bundlePath + "/Contents/Resources/payloads/llama"
-        task.environment = env
-        
-        let pipe = Pipe()
-        task.standardOutput = pipe
-        task.standardError = pipe
-        
-        self.serverPipe = pipe
-        self.serverTask = task
-        
-        DispatchQueue.main.async {
-            self.isServerRunning = true
-            self.serverLogs = "🚀 Starting llama-server directly via Swift Process...\n"
-            self.serverLogs += "Model: \(modelPath)\n"
-            self.serverLogs += "Interceptor: \(dylibPath)\n"
-            self.serverLogs += "Port: 1234\n\n"
-        }
-        
-        DispatchQueue.global(qos: .background).async { [weak self] in
-            let fileHandle = pipe.fileHandleForReading
-            fileHandle.readabilityHandler = { handle in
-                let availableData = handle.availableData
-                if availableData.count > 0 {
-                    if let str = String(data: availableData, encoding: .utf8) {
-                        DispatchQueue.main.async {
-                            self?.serverLogs += str
-                        }
-                    }
-                }
-            }
-            
-            do {
-                try task.run()
-                task.terminationHandler = { [weak self] process in
-                    DispatchQueue.main.async {
-                        self?.isServerRunning = false
-                        self?.serverLogs += "\nServer stopped (Exit code: \(process.terminationStatus)).\n"
-                    }
-                }
-            } catch {
-                DispatchQueue.main.async {
-                    self?.isServerRunning = false
-                    self?.serverLogs += "\nFailed to start server: \(error.localizedDescription)\n"
+        DispatchQueue.global(qos: .userInitiated).async {
+            let success = self.engine.loadModel(atPath: modelPath, gpuLayers: Int32(gpuLayers))
+            DispatchQueue.main.async {
+                if success {
+                    self.isServerRunning = true
+                    self.serverLogs += "Model loaded successfully.\n\n"
+                } else {
+                    self.serverLogs += "Failed to load model.\n\n"
                 }
             }
         }
     }
     
     func stopLLMServer() {
-        if let st = serverTask, st.isRunning {
-            st.terminate()
-        }
-        serverTask = nil
+        engine.unloadModel()
+        isServerRunning = false
+        serverLogs += "Model unloaded.\n"
+    }
+    
+    func generate(prompt: String, onToken: @escaping (String) -> Void, onComplete: @escaping () -> Void) {
+        engine.generateResponse(forPrompt: prompt, onToken: onToken, onComplete: onComplete)
     }
     
     func cleanupAndExit() {
