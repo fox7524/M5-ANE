@@ -1,35 +1,42 @@
-# Ultimate LLM Studio - Execution Plan
+# Ultimate LLM Studio - Implementation Plan
 
 ## Summary
-This plan outlines the step-by-step execution of the `roadmap.md` for the Ultimate LLM Studio project. We will execute the phases one by one, starting with Phase 1. Since you want to learn Swift and be involved, I will assign you specific, well-explained coding tasks.
+Kullanıcının talebi doğrultusunda, uygulamanın sorunsuz bir şekilde Xcode üzerinden (`Cmd+B` ve `Cmd+R`) derlenebilmesi için `xcodegen` kullanılarak tam teşekküllü bir `.xcodeproj` dosyası oluşturulacaktır. Ayrıca, "saçma sapan" bulunan arayüz çöpe atılarak; tamamen **LM Studio**'nun orijinal arayüzüne (tasarımına, renk paletine, yan menülerine ve üst bar yapısına) birebir benzeyecek, LokumAI'nin donanım yetenekleriyle birleştirilmiş yeni bir SwiftUI arayüzü kodlanacaktır. Son olarak `llama-server` alt süreci (subprocess) Swift ile düzgünce başlatılıp yönetilecektir.
 
 ## Current State Analysis
-- **Architecture**: The app uses a SwiftUI `NavigationSplitView` (`ContentView.swift`) and a backend singleton (`BackendManager.swift`).
-- **Phase 1 Status**: `start_server.sh` exists but `BackendManager.startServer()` is currently a stub that only prints "Starting local server...". The required binaries (`llama-server` and `libmetal_interceptor.dylib`) are missing from the repository.
+- Projede `.xcodeproj` dosyası eksik olduğu için Xcode'da doğrudan açılamıyor.
+- Mevcut SwiftUI arayüzü (`ContentView.swift`) kullanıcının beklediği profesyonel LM Studio (Electron/React tabanlı) kalitesinde ve yapısında değil.
+- `BackendManager.swift` içindeki `llama-server` başlatma mantığı tam teşekküllü değil.
 
-## Proposed Changes (Phase 1: Core Engine Integration)
+## Proposed Changes
 
-### 1. Update `BackendManager.swift` to use `Process` (Agent Task)
-- **What**: I will write the code to spawn `start_server.sh` using Swift's `Process` (formerly `NSTask`).
-- **Why**: To run the LLM server in the background and capture its standard output/error.
-- **How**: Create a `startLLMServer(modelPath: String)` function in `BackendManager.swift` that sets up pipes and reads the output asynchronously.
+### 1. Xcode Projesinin Oluşturulması (.xcodeproj)
+- **Dosya:** `project.yml` (Yeni oluşturulacak)
+- **Ne Yapılacak:** `xcodegen` aracı kullanılarak projenin bağımlılıklarını, hedeflerini (target) ve kaynak dosyalarını (`.swift`, `.mm`, `.h`) içeren bir yapılandırma dosyası yazılacak.
+- **Nasıl:** Terminalden `xcodegen generate` komutu çalıştırılarak `UltimateLLMStudio.xcodeproj` dosyası üretilecek. Bu sayede `Cmd+B` (Build) ve `Cmd+R` (Run) anında çalışacak.
 
-### 2. Connect the UI to the Backend (User Task - Guided)
-- **What**: You will update `ContentView.swift` to call the new `startLLMServer` function when the user clicks the "Start Local Server" button, passing the selected model path.
-- **Why**: To give you hands-on experience with SwiftUI state (`@State`) and action bindings.
-- **How**: I will teach you about Swift's `@ObservedObject` or `@StateObject` and give you instructions on how to hook the button to the manager.
+### 2. LM Studio UI Klonlanması (SwiftUI ile)
+- **Dosya:** `ContentView.swift` (ve alt UI bileşenleri)
+- **Ne Yapılacak:** LM Studio'nun klasik koyu temalı arayüzü birebir taklit edilecek.
+  - **Sol Panel:** Sohbet geçmişi ve yeni sohbet butonu (ikonlar ve hover efektleriyle).
+  - **Üst Bar:** Ortada model seçici dropdown (açılır menü) ve sağda CPU/RAM/ANE kullanım metrikleri.
+  - **Orta Alan:** Kullanıcı ve AI sohbet balonları (geniş, okunabilir, Markdown destekli, LM Studio renk kodlarıyla).
+  - **Sağ Panel:** Model ayarları, Tensor Split (GPU/ANE) slider'ları ve donanım limitleri.
+- **Nasıl:** SwiftUI'ın `HStack`, `VStack`, `List` ve özelleştirilmiş `Color` paletleri kullanılarak LM Studio'nun CSS kodlarındaki padding, margin ve renk değerleri Native macOS bileşenlerine dönüştürülecek.
 
-### 3. Handle Missing Binaries (Joint Task)
-- **What**: We need to create dummy scripts or download actual binaries for `llama-server` and `libmetal_interceptor.dylib` so the app doesn't crash when `start_server.sh` is called.
-- **Why**: The bash script expects these files to exist.
+### 3. llama-server Subprocess Entegrasyonu
+- **Dosya:** `BackendManager.swift`
+- **Ne Yapılacak:** `llama.cpp`'nin `llama-server` binary'sini Swift üzerinden bir Subprocess (`Process`) olarak çalıştıracak kod yazılacak.
+- **Nasıl:** 
+  - `Process()` oluşturulacak.
+  - `DYLD_INSERT_LIBRARIES` environment variable olarak ayarlanıp `libmetal_interceptor.dylib` enjekte edilecek.
+  - Standart çıktı (`stdout` ve `stderr`) Pipe ile dinlenerek UI'daki log ekranına yansıtılacak.
 
 ## Assumptions & Decisions
-- We are using **Direct Process Invocation** for the background server.
-- We are focusing *only* on Phase 1 first. We will move to Phase 2 (UI/UX Design) once Phase 1 is fully working and tested.
-- I will act as a mentor, explaining Swift concepts before asking you to write or paste code.
+- Kullanıcı LM Studio arayüzünü istediği için, Electron uygulamasının kaynak kodlarını (JS/CSS) doğrudan kullanamayız; ancak SwiftUI ile pikselleri pikseline aynı görünecek bir "Native Clone" yazacağız.
+- Xcode projesi için `xcodegen` kullanılacak, bu standart ve en temiz yöntemdir.
 
 ## Verification
-- We will verify by running the app and checking if clicking "Start Local Server" successfully spawns the bash script and captures its output without crashing.
-
----
-*Once you approve this plan, I will exit Plan Mode and we will begin Phase 1 immediately!*
+- `xcodegen` çalıştırıldıktan sonra klasörde `UltimateLLMStudio.xcodeproj` dosyasının oluştuğu görülecek.
+- Proje Xcode ile açılıp `Cmd+R` yapıldığında hatasız derlenecek.
+- Uygulama açıldığında tam bir LM Studio kopyası görünecek ve "Start Server" dendiğinde Swift arka planda `llama-server`'ı çalıştıracak.

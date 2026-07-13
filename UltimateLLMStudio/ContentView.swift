@@ -26,16 +26,15 @@ struct ContentView: View {
     ]
     
     var body: some View {
-        NavigationSplitView(columnVisibility: .constant(.all)) {
+        HSplitView {
             // Left: Discovery / Sidebar
             SidebarView(
                 localModels: $localModels,
                 selectedModel: $selectedModel,
                 isServerRunning: backend.isServerRunning
             )
-            .navigationSplitViewColumnWidth(min: 200, ideal: 250, max: 300)
+            .frame(minWidth: 200, idealWidth: 250, maxWidth: 300)
             
-        } content: {
             // Center: Chat Area
             ChatAreaView(
                 messages: $messages,
@@ -44,9 +43,8 @@ struct ContentView: View {
                 isServerRunning: backend.isServerRunning,
                 onSend: sendMessage
             )
-            .navigationSplitViewColumnWidth(min: 400, ideal: 600)
+            .frame(minWidth: 400, maxWidth: .infinity)
             
-        } detail: {
             // Right: Hardware Control & Logs
             MetricsPanel(
                 splitRatio: $splitRatio,
@@ -54,9 +52,10 @@ struct ContentView: View {
                 isServerRunning: backend.isServerRunning,
                 onToggleServer: toggleServer
             )
-            .navigationSplitViewColumnWidth(min: 250, ideal: 300, max: 400)
+            .frame(minWidth: 250, idealWidth: 300, maxWidth: 400)
         }
-        .navigationTitle("Ultimate LLM Studio")
+        .frame(minWidth: 900, minHeight: 600)
+        .background(Theme.bgMain)
         .toolbar {
             ToolbarItem(placement: .status) {
                 HStack {
