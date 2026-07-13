@@ -139,13 +139,33 @@ class BackendManager: ObservableObject {
     func startLLMServer(modelPath: String, engineType: String = "GGUF") {
         guard !isServerRunning else { return }
         
-        let scriptPath = Bundle.main.bundlePath + "/Contents/Resources/start_server.sh"
-        let fallbackPath = "/Users/fox/Documents/PROJECTS/M5/UltimateLLMStudio/start_server.sh"
-        let executablePath = FileManager.default.fileExists(atPath: scriptPath) ? scriptPath : fallbackPath
+        // Find llama-server binary in the app bundle
+        let bundlePath = Bundle.main.bundlePath
+        let llamaServerPath = bundlePath + "/Contents/Resources/payloads/llama/llama-server"
+        let fallbackLlamaServer = "/Users/fox/Documents/PROJECTS/M5/llama.cpp/build/bin/llama-server"
+        let executablePath = FileManager.default.fileExists(atPath: llamaServerPath) ? llamaServerPath : fallbackLlamaServer
+        
+        // Find libmetal_interceptor.dylib
+        let interceptorPath = bundlePath + "/Contents/Resources/libmetal_interceptor.dylib"
+        let fallbackInterceptor = "/Users/fox/Documents/PROJECTS/M5/UltimateLLMStudio/libmetal_interceptor.dylib"
+        let dylibPath = FileManager.default.fileExists(atPath: interceptorPath) ? interceptorPath : fallbackInterceptor
         
         let task = Process()
-        task.executableURL = URL(fileURLWithPath: "/bin/bash")
-        task.arguments = [executablePath, engineType, modelPath]
+        task.executableURL = URL(fileURLWithPath: executablePath)
+        
+        // Add required arguments for llama-server
+        task.arguments = [
+            "-m", modelPath,
+            "--port", "1234",
+            "-c", "4096", // Context window
+            "-ngl", "99"  // Offload all layers
+        ]
+        
+        // Setup Environment for Metal Interceptor
+        var env = ProcessInfo.processInfo.environment
+        env["DYLD_INSERT_LIBRARIES"] = dylibPath
+        env["GGML_METAL_PATH_RESOURCES"] = bundlePath + "/Contents/Resources/payloads/llama"
+        task.environment = env
         
         let pipe = Pipe()
         task.standardOutput = pipe
@@ -156,9 +176,10 @@ class BackendManager: ObservableObject {
         
         DispatchQueue.main.async {
             self.isServerRunning = true
-            self.serverLogs = "🚀 Starting Neural Engine offloading...\n"
+            self.serverLogs = "🚀 Starting llama-server directly via Swift Process...\n"
             self.serverLogs += "Model: \(modelPath)\n"
-            self.serverLogs += "Port: 1234\n"
+            self.serverLogs += "Interceptor: \(dylibPath)\n"
+            self.serverLogs += "Port: 1234\n\n"
         }
         
         DispatchQueue.global(qos: .background).async { [weak self] in

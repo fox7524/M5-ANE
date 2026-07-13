@@ -1,0 +1,23 @@
+name: UltimateLLMStudio
+options:
+  bundleIdPrefix: com.fox
+targets:
+  UltimateLLMStudio:
+    type: application
+    platform: macOS
+    deploymentTarget: "13.0"
+    sources:
+      - path: .
+        includes:
+          - App.swift
+          - ContentView.swift
+          - BackendManager.swift
+          - M5UltimateWrapper.mm
+          - M5UltimateWrapper.h
+          - M5Ultimate-Bridging-Header.h
+          - AppIcon.icns
+          - start_server.sh
+    settings:
+      base:
+        SWIFT_OBJC_BRIDGING_HEADER: M5Ultimate-Bridging-Header.h
+        ENABLE_HARDENED_RUNTIME: NO
