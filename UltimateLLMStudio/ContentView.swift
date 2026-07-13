@@ -65,12 +65,12 @@ struct ContentView: View {
                             }
                             .padding()
                         }
-                        .onChange(of: messages.count) { _, _ in
+                        .onChange(of: messages.count) { _ in
                             if let lastId = messages.last?.id {
                                 withAnimation { proxy.scrollTo(lastId, anchor: .bottom) }
                             }
                         }
-                        .onChange(of: messages.last?.content) { _, _ in
+                        .onChange(of: messages.last?.content) { _ in
                             if let lastId = messages.last?.id {
                                 withAnimation { proxy.scrollTo(lastId, anchor: .bottom) }
                             }
