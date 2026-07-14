@@ -17,6 +17,7 @@ if [ "$MODE" == "restore" ]; then
     # 1. Restore GGUF
     if [ -f "$LLAMA_SERVER_DIR/llama-server.orig" ]; then
         mv -f "$LLAMA_SERVER_DIR/llama-server.orig" "$LLAMA_SERVER_DIR/llama-server"
+        rm -f "$LLAMA_SERVER_DIR/llama-server.ane" 2>/dev/null || true
         echo "llama-server restored."
     fi
     
@@ -30,19 +31,25 @@ if [ "$MODE" == "restore" ]; then
             mv -f "$MLX_DIR/mlx.metallib.orig" "$MLX_DIR/mlx.metallib"
         fi
         
-        # Restore Python Executable Signature
-        MLX_PYTHON_BIN=$(find "$USER_HOME/.lmstudio/extensions/backends" -type f -name "python3.11" | head -n 1)
-        if [ -f "${MLX_PYTHON_BIN}.orig" ]; then
-            mv -f "${MLX_PYTHON_BIN}.orig" "$MLX_PYTHON_BIN"
-            echo "Restored Python binary in $MLX_PYTHON_BIN"
-        fi
         MLX_PYTHON_SO=$(dirname "$MLX_DIR")/core.cpython-311-darwin.so
-        if [ -f "$MLX_PYTHON_SO" ]; then
+        if [ -f "${MLX_PYTHON_SO}.orig" ]; then
+            mv -f "${MLX_PYTHON_SO}.orig" "$MLX_PYTHON_SO"
+            echo "Restored MLX python module in $MLX_PYTHON_SO"
+        elif [ -f "$MLX_PYTHON_SO" ]; then
             install_name_tool -change @loader_path/lib/libmlx.dylib @loader_path/libmlx.dylib "$MLX_PYTHON_SO" 2>/dev/null || true
             install_name_tool -change @loader_path/lib/libmlx.dylib @rpath/libmlx.dylib "$MLX_PYTHON_SO" 2>/dev/null || true
             codesign --force --sign - "$MLX_PYTHON_SO" 2>/dev/null || true
         fi
         echo "Restored MLX files in $MLX_DIR"
+    done
+    
+    # 3. Restore Python Executable Signatures
+    PYTHON_BINS=$(find "$USER_HOME/.lmstudio/extensions/backends" -type f -name "python3.11" 2>/dev/null || true)
+    for PY_BIN in $PYTHON_BINS; do
+        if [ -f "${PY_BIN}.orig" ]; then
+            mv -f "${PY_BIN}.orig" "$PY_BIN"
+            echo "Restored Python binary in $PY_BIN"
+        fi
     done
     
     exit 0
@@ -57,42 +64,19 @@ LATEST_LLAMA_SERVER=$(find "$LLAMA_SERVER_DIR" -type f -name "llama-server" ! -n
 if [ ! -z "$LATEST_LLAMA_SERVER" ]; then
     echo "Found llama-server at: $LATEST_LLAMA_SERVER"
     
-    # Check if the original is actually our broken insert_dylib patched version from yesterday
-    # If llama-server-bin exists, that's the true original!
-    if [ -f "$LLAMA_SERVER_DIR/llama-server-bin" ]; then
-        echo "Found true original llama-server-bin. Using it as backup."
-        cp -f "$LLAMA_SERVER_DIR/llama-server-bin" "$LLAMA_SERVER_DIR/llama-server.orig"
-    elif [ ! -f "${LATEST_LLAMA_SERVER}.orig" ]; then
-        mv "$LATEST_LLAMA_SERVER" "${LATEST_LLAMA_SERVER}.orig"
+    if [ ! -f "${LATEST_LLAMA_SERVER}.orig" ]; then
+        cp "$LATEST_LLAMA_SERVER" "${LATEST_LLAMA_SERVER}.orig"
     fi
     
-    # Create the Proxy Script
-    cat << EOF > "$LATEST_LLAMA_SERVER"
-#!/bin/bash
-# M5 Ultimate Proxy Wrapper
-
-ORIGINAL_SERVER="\${0}.orig"
-CUSTOM_SERVER="$M5_RESOURCES_DIR/payloads/llama/llama-server"
-CUSTOM_METAL_DIR="$M5_RESOURCES_DIR/payloads/llama"
-
-export M5_ANE_ENABLED="1"
-export GGML_METAL_PATH_RESOURCES="\$CUSTOM_METAL_DIR"
-export DYLD_LIBRARY_PATH="\$CUSTOM_METAL_DIR:\$DYLD_LIBRARY_PATH"
-
-echo "[M5 Proxy] Intercepted llama-server launch!" > /tmp/m5_proxy.log
-echo "[M5 Proxy] Args: \$@" >> /tmp/m5_proxy.log
-
-if [ -x "\$CUSTOM_SERVER" ]; then
-    echo "[M5 Proxy] Redirecting to custom ANE llama-server..." >> /tmp/m5_proxy.log
-    exec "\$CUSTOM_SERVER" "\$@"
-else
-    echo "[M5 Proxy] Custom server not found at \$CUSTOM_SERVER ! Falling back to original..." >> /tmp/m5_proxy.log
-    exec "\$ORIGINAL_SERVER" "\$@"
-fi
-EOF
-
+    # Replace the llama-server and copy dylibs
+    cp -f "$M5_RESOURCES_DIR/payloads/llama/llama-proxy" "$LATEST_LLAMA_SERVER"
+    cp -f "$M5_RESOURCES_DIR/payloads/llama/llama-server.ane" "${LATEST_LLAMA_SERVER}.ane"
+    cp -f "$M5_RESOURCES_DIR/payloads/llama/"*.dylib "$LLAMA_SERVER_DIR/" 2>/dev/null || true
+    cp -f "$M5_RESOURCES_DIR/payloads/llama/ggml-metal.metal" "$LLAMA_SERVER_DIR/" 2>/dev/null || true
+    
     chmod +x "$LATEST_LLAMA_SERVER"
-    echo "GGUF Proxy injected successfully."
+    chmod +x "${LATEST_LLAMA_SERVER}.ane"
+    echo "GGUF Payload injected successfully."
 else
     echo "llama-server not found. Skipping GGUF."
 fi
@@ -115,62 +99,44 @@ if [ ! -z "$MLX_PATHS" ]; then
         cp -f "$M5_RESOURCES_DIR/payloads/mlx/libmlx.dylib" "$MLX_DIR/"
         cp -f "$M5_RESOURCES_DIR/payloads/mlx/mlx.metallib" "$MLX_DIR/"
         
+        # Remove quarantine
+        xattr -cr "$MLX_DIR" 2>/dev/null || true
+        
         # Fix dynamic link path for python module
         MLX_PYTHON_SO=$(dirname "$MLX_DIR")/core.cpython-311-darwin.so
         if [ -f "$MLX_PYTHON_SO" ]; then
+            if [ ! -f "${MLX_PYTHON_SO}.orig" ]; then
+                cp "$MLX_PYTHON_SO" "${MLX_PYTHON_SO}.orig"
+            fi
+            
             # Since the original expected @rpath/libmlx.dylib and we want to load our injected one in lib/libmlx.dylib
             install_name_tool -change @rpath/libmlx.dylib @loader_path/lib/libmlx.dylib "$MLX_PYTHON_SO" 2>/dev/null || true
             install_name_tool -change @loader_path/libmlx.dylib @loader_path/lib/libmlx.dylib "$MLX_PYTHON_SO" 2>/dev/null || true
             
-            # Create entitlements to disable library validation
-            cat << 'ENT' > /tmp/mlx_entitlements.plist
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>com.apple.security.cs.disable-library-validation</key>
-    <true/>
-</dict>
-</plist>
-ENT
+            xattr -cr "$MLX_PYTHON_SO" 2>/dev/null || true
             codesign --remove-signature "$MLX_PYTHON_SO" >> /tmp/m5_inject.log 2>&1 || true
-            codesign --force --sign - --entitlements /tmp/mlx_entitlements.plist "$MLX_PYTHON_SO" >> /tmp/m5_inject.log 2>&1
+            codesign --force --sign - "$MLX_PYTHON_SO" >> /tmp/m5_inject.log 2>&1
         fi
     done
-    # Fix Python Executable Signature for Library Validation
-    MLX_PYTHON_BIN=$(find "$USER_HOME/.lmstudio/extensions/backends" -type f -name "python3.11" | head -n 1)
-    if [ ! -z "$MLX_PYTHON_BIN" ]; then
-        if [ ! -f "${MLX_PYTHON_BIN}.orig" ]; then
-            cp "$MLX_PYTHON_BIN" "${MLX_PYTHON_BIN}.orig"
-        fi
-        
+    # Fix Python Executable Signatures for Library Validation
+    PYTHON_BINS=$(find "$USER_HOME/.lmstudio/extensions/backends" -type f -name "python3.11" 2>/dev/null || true)
+    if [ ! -z "$PYTHON_BINS" ]; then
         echo "Killing any running python3.11 to avoid Text file busy..." >> /tmp/m5_inject.log
         pkill -9 python3.11 2>/dev/null || true
         sleep 1
         
-        cat << 'ENT' > /tmp/python_entitlements.plist
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>com.apple.security.cs.allow-dyld-environment-variables</key>
-    <true/>
-    <key>com.apple.security.cs.allow-jit</key>
-    <true/>
-    <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
-    <true/>
-    <key>com.apple.security.device.audio-input</key>
-    <true/>
-    <key>com.apple.security.cs.disable-library-validation</key>
-    <true/>
-</dict>
-</plist>
-ENT
-        echo "Removing original Apple signature..." >> /tmp/m5_inject.log
-        codesign --remove-signature "$MLX_PYTHON_BIN" >> /tmp/m5_inject.log 2>&1 || true
-        echo "Applying ad-hoc signature with entitlements..." >> /tmp/m5_inject.log
-        codesign --force --sign - --entitlements /tmp/python_entitlements.plist "$MLX_PYTHON_BIN" >> /tmp/m5_inject.log 2>&1
-        echo "Patched Python executable to disable library validation."
+        for PY_BIN in $PYTHON_BINS; do
+            if [ ! -f "${PY_BIN}.orig" ]; then
+                cp "$PY_BIN" "${PY_BIN}.orig"
+            fi
+            
+            echo "Removing original Apple signature and clearing quarantine for $PY_BIN..." >> /tmp/m5_inject.log
+            xattr -cr "$PY_BIN" 2>/dev/null || true
+            codesign --remove-signature "$PY_BIN" >> /tmp/m5_inject.log 2>&1 || true
+            echo "Applying plain ad-hoc signature for $PY_BIN..." >> /tmp/m5_inject.log
+            codesign --force --sign - "$PY_BIN" >> /tmp/m5_inject.log 2>&1
+            echo "Patched Python executable to disable Hardened Runtime: $PY_BIN"
+        done
     fi
 
     echo "MLX Injection successfully completed."

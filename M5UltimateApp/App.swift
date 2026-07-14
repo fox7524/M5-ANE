@@ -166,6 +166,25 @@ struct DashboardView: View {
                 self.isInjected = newStatus
             }
         }
+        .onAppear {
+            checkInjectionStatus()
+        }
+    }
+    
+    func checkInjectionStatus() {
+        let fileManager = FileManager.default
+        let homeDir = NSHomeDirectory()
+        let origGGUF = homeDir + "/.cache/lm-studio/bin/llama-server.orig"
+        
+        let isGGUFInjected = fileManager.fileExists(atPath: origGGUF)
+        
+        // If GGUF is injected, consider the system injected.
+        let status = isGGUFInjected
+        DispatchQueue.main.async {
+            self.isInjected = status
+            UserDefaults.standard.set(status, forKey: "isInjected")
+            NotificationCenter.default.post(name: NSNotification.Name("InjectStatusChanged"), object: status)
+        }
     }
     
     func startGauges() {
@@ -255,7 +274,12 @@ struct DashboardView: View {
         let scriptPath = Bundle.main.url(forResource: "inject_lmstudio", withExtension: "sh")?.path ?? ""
         guard !scriptPath.isEmpty else { return }
         
-        let mode = isInjected ? "restore" : "inject"
+        let fileManager = FileManager.default
+        let homeDir = NSHomeDirectory()
+        let origGGUF = homeDir + "/.cache/lm-studio/bin/llama-server.orig"
+        let currentInjectedState = fileManager.fileExists(atPath: origGGUF)
+        
+        let mode = currentInjectedState ? "restore" : "inject"
         let script = "do shell script quoted form of \"\(scriptPath)\" & \" \" & \"\(mode)\" with administrator privileges without altering line endings"
         
         var error: NSDictionary?
@@ -263,7 +287,8 @@ struct DashboardView: View {
             appleScript.executeAndReturnError(&error)
             if error == nil {
                 DispatchQueue.main.async {
-                    self.isInjected.toggle()
+                    self.isInjected = !currentInjectedState
+                    UserDefaults.standard.set(self.isInjected, forKey: "isInjected")
                     NotificationCenter.default.post(name: NSNotification.Name("InjectStatusChanged"), object: self.isInjected)
                 }
             } else {
@@ -379,20 +404,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
-        if UserDefaults.standard.bool(forKey: "isInjected") {
-            print("App is closing, cleaning up injections before exit...")
-            let scriptPath = Bundle.main.url(forResource: "inject_lmstudio", withExtension: "sh")?.path ?? ""
-            if !scriptPath.isEmpty {
-                let script = "do shell script quoted form of \"\(scriptPath)\" & \" restore\" with administrator privileges without altering line endings"
-                var error: NSDictionary?
-                if let appleScript = NSAppleScript(source: script) {
-                    appleScript.executeAndReturnError(&error)
-                    if error == nil {
-                        UserDefaults.standard.set(false, forKey: "isInjected")
-                    }
-                }
-            }
-        }
+        // Removed automatic restore on exit. The user can manually restore when needed.
         return .terminateNow
     }
     
@@ -485,7 +497,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
         
-        let isInjected = UserDefaults.standard.bool(forKey: "isInjected")
+        let fileManager = FileManager.default
+        let homeDir = NSHomeDirectory()
+        let origGGUF = homeDir + "/.cache/lm-studio/bin/llama-server.orig"
+        let isInjected = fileManager.fileExists(atPath: origGGUF)
+        
         let mode = isInjected ? "restore" : "inject"
         
         let script = "do shell script quoted form of \"\(scriptPath)\" & \" \" & \"\(mode)\" with administrator privileges without altering line endings"

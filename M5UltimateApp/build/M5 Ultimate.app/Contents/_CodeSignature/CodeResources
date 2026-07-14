@@ -18,7 +18,7 @@
 		</data>
 		<key>Resources/inject_lmstudio.sh</key>
 		<data>
-		/7cFX3AaEvdgwEseTXmqxCI6YB4=
+		uDb/NSpxM0Yx5OKdXG+XhDfvtBw=
 		</data>
 		<key>Resources/insert_dylib</key>
 		<data>
@@ -164,7 +164,15 @@
 		<data>
 		sS7Cnxh9+XQj5QkfpSfC+Q+x5lI=
 		</data>
+		<key>Resources/payloads/llama/llama-proxy</key>
+		<data>
+		lIVT2FAcPuZTMsSYjGqlhW7u6Ec=
+		</data>
 		<key>Resources/payloads/llama/llama-server</key>
+		<data>
+		RWh+R2w/GY6xKkgoXwTsdr3GSJw=
+		</data>
+		<key>Resources/payloads/llama/llama-server.ane</key>
 		<data>
 		syg5NPTZY5405rxRsc0wCxxEi/A=
 		</data>
@@ -208,7 +216,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			5Qwjvd2NOOn5qRaVPQZIDw+/U29V5oUmRBW0sTIVBzU=
+			YNixsxg2uXBtkJS5GjOS7ygdoiXKv5RzGKl55OSdEKg=
 			</data>
 		</dict>
 		<key>Resources/insert_dylib</key>
@@ -463,7 +471,21 @@
 			WfKf4V1irUkQe13B11HK0Uh6zvEdDTwWe3f4fXpRPO4=
 			</data>
 		</dict>
+		<key>Resources/payloads/llama/llama-proxy</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			kxFmX0J4aJuCspQBThAIndjU6zKjA8g+ktEGZBSSTWw=
+			</data>
+		</dict>
 		<key>Resources/payloads/llama/llama-server</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			Mh0m7qEdBosDhmMO/1njUtoCVNzZjRc8OTddS1aHdTo=
+			</data>
+		</dict>
+		<key>Resources/payloads/llama/llama-server.ane</key>
 		<dict>
 			<key>hash2</key>
 			<data>

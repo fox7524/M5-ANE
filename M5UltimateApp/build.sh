@@ -20,7 +20,11 @@ echo "Embedding payloads..."
 mkdir -p "$APP_DIR/Contents/Resources/payloads/llama"
 mkdir -p "$APP_DIR/Contents/Resources/payloads/mlx"
 
-cp -f ../llama.cpp/build/bin/llama-server "$APP_DIR/Contents/Resources/payloads/llama/" 2>/dev/null || true
+# Compile and copy proxy instead of replacing binary directly
+echo "Compiling C++ Proxy for GGUF..."
+clang++ -O2 -std=c++11 llama-proxy.cpp -o "$APP_DIR/Contents/Resources/payloads/llama/llama-proxy"
+
+cp -f ../llama.cpp/build/bin/llama-server "$APP_DIR/Contents/Resources/payloads/llama/llama-server.ane" 2>/dev/null || true
 cp -f ../llama.cpp/build/bin/lib*.dylib "$APP_DIR/Contents/Resources/payloads/llama/" 2>/dev/null || true
 cp -f ../llama.cpp/ggml/src/ggml-metal/ggml-metal.metal "$APP_DIR/Contents/Resources/payloads/llama/" 2>/dev/null || true
 cp -f ../mlx/python/mlx/lib/mlx.metallib "$APP_DIR/Contents/Resources/payloads/mlx/" 2>/dev/null || true
