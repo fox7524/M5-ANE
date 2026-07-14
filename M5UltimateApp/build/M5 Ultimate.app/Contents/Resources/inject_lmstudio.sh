@@ -1,11 +1,15 @@
 #!/bin/bash
 # M5 Ultimate - LM Studio Proxy Injector
 
-exec >> /tmp/m5_inject.log 2>&1
+USER_HOME=$(eval echo ~$SUDO_USER)
+if [ -z "$USER_HOME" ] || [ "$USER_HOME" == "~" ]; then
+    USER_HOME=$HOME
+fi
+
+exec >> "$USER_HOME/m5_inject.log" 2>&1
 echo "--- Starting M5 Ultimate (${1:-inject}) at $(date) ---"
 
 MODE=$1
-USER_HOME=$(eval echo ~$SUDO_USER)
 M5_RESOURCES_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 # Paths
@@ -55,6 +59,20 @@ if [ "$MODE" == "restore" ]; then
     exit 0
 fi
 
+# --- Create Entitlements XML for codesign ---
+cat << 'EOF' > "$USER_HOME/m5_ents.xml"
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>com.apple.security.cs.disable-library-validation</key>
+    <true/>
+    <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+    <true/>
+</dict>
+</plist>
+EOF
+
 echo "Injecting M5 Ultimate Proxy into LM Studio..."
 
 # --- 1. Proxy GGUF (llama-server) ---
@@ -63,6 +81,10 @@ LATEST_LLAMA_SERVER=$(find "$LLAMA_SERVER_DIR" -type f -name "llama-server" ! -n
 
 if [ ! -z "$LATEST_LLAMA_SERVER" ]; then
     echo "Found llama-server at: $LATEST_LLAMA_SERVER"
+    
+    echo "Killing any running llama-server..." >> "$USER_HOME/m5_inject.log"
+    pkill -9 llama-server 2>/dev/null || true
+    sleep 1
     
     if [ ! -f "${LATEST_LLAMA_SERVER}.orig" ]; then
         cp "$LATEST_LLAMA_SERVER" "${LATEST_LLAMA_SERVER}.orig"
@@ -99,10 +121,10 @@ if [ ! -z "$MLX_PATHS" ]; then
         cp -f "$M5_RESOURCES_DIR/payloads/mlx/libmlx.dylib" "$MLX_DIR/"
         cp -f "$M5_RESOURCES_DIR/payloads/mlx/mlx.metallib" "$MLX_DIR/"
         
-        # Remove quarantine and apply ad-hoc signature to libmlx.dylib
+        # Remove quarantine and apply ad-hoc signature with entitlements to libmlx.dylib
         xattr -cr "$MLX_DIR/libmlx.dylib" 2>/dev/null || true
-        codesign --remove-signature "$MLX_DIR/libmlx.dylib" >> /tmp/m5_inject.log 2>&1 || true
-        codesign --force --sign - "$MLX_DIR/libmlx.dylib" >> /tmp/m5_inject.log 2>&1
+        codesign --remove-signature "$MLX_DIR/libmlx.dylib" >> "$USER_HOME/m5_inject.log" 2>&1 || true
+        codesign --force --sign - --entitlements "$USER_HOME/m5_ents.xml" "$MLX_DIR/libmlx.dylib" >> "$USER_HOME/m5_inject.log" 2>&1
         
         # Remove quarantine
         xattr -cr "$MLX_DIR" 2>/dev/null || true
@@ -119,14 +141,14 @@ if [ ! -z "$MLX_PATHS" ]; then
             install_name_tool -change @loader_path/libmlx.dylib @loader_path/lib/libmlx.dylib "$MLX_PYTHON_SO" 2>/dev/null || true
             
             xattr -cr "$MLX_PYTHON_SO" 2>/dev/null || true
-            codesign --remove-signature "$MLX_PYTHON_SO" >> /tmp/m5_inject.log 2>&1 || true
-            codesign --force --sign - "$MLX_PYTHON_SO" >> /tmp/m5_inject.log 2>&1
+            codesign --remove-signature "$MLX_PYTHON_SO" >> "$USER_HOME/m5_inject.log" 2>&1 || true
+            codesign --force --sign - --entitlements "$USER_HOME/m5_ents.xml" "$MLX_PYTHON_SO" >> "$USER_HOME/m5_inject.log" 2>&1
         fi
     done
     # Fix Python Executable Signatures for Library Validation
     PYTHON_BINS=$(find "$USER_HOME/.lmstudio/extensions/backends" -type f -name "python3.11" 2>/dev/null || true)
     if [ ! -z "$PYTHON_BINS" ]; then
-        echo "Killing any running python3.11 to avoid Text file busy..." >> /tmp/m5_inject.log
+        echo "Killing any running python3.11 to avoid Text file busy..." >> "$USER_HOME/m5_inject.log"
         pkill -9 python3.11 2>/dev/null || true
         sleep 1
         
@@ -135,12 +157,12 @@ if [ ! -z "$MLX_PATHS" ]; then
                 cp "$PY_BIN" "${PY_BIN}.orig"
             fi
             
-            echo "Removing original Apple signature and clearing quarantine for $PY_BIN..." >> /tmp/m5_inject.log
+            echo "Removing original Apple signature and clearing quarantine for $PY_BIN..." >> "$USER_HOME/m5_inject.log"
             xattr -cr "$PY_BIN" 2>/dev/null || true
-            codesign --remove-signature "$PY_BIN" >> /tmp/m5_inject.log 2>&1 || true
+            codesign --remove-signature "$PY_BIN" >> "$USER_HOME/m5_inject.log" 2>&1 || true
             
-            echo "Applying plain ad-hoc signature for $PY_BIN..." >> /tmp/m5_inject.log
-            codesign --force --sign - "$PY_BIN" >> /tmp/m5_inject.log 2>&1
+            echo "Applying plain ad-hoc signature with entitlements for $PY_BIN..." >> "$USER_HOME/m5_inject.log"
+            codesign --force --sign - --entitlements "$USER_HOME/m5_ents.xml" "$PY_BIN" >> "$USER_HOME/m5_inject.log" 2>&1
             echo "Patched Python executable to disable Hardened Runtime: $PY_BIN"
         done
     fi

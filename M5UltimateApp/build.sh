@@ -20,6 +20,20 @@ echo "Embedding payloads..."
 mkdir -p "$APP_DIR/Contents/Resources/payloads/llama"
 mkdir -p "$APP_DIR/Contents/Resources/payloads/mlx"
 
+# Create Entitlements XML for signing
+cat << 'EOF' > build/m5_ents.xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>com.apple.security.cs.disable-library-validation</key>
+    <true/>
+    <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+    <true/>
+</dict>
+</plist>
+EOF
+
 # Compile and copy proxy instead of replacing binary directly
 echo "Compiling C++ Proxy for GGUF..."
 clang++ -O2 -std=c++11 llama-proxy.cpp -o "$APP_DIR/Contents/Resources/payloads/llama/llama-proxy"
@@ -78,8 +92,8 @@ swiftc App.swift ContentView.swift BackendManager.swift \
     -framework IOKit -framework Foundation -framework SwiftUI -framework AppKit -framework IOSurface \
     -o "$MACOS_DIR/$APP_NAME"
 
-echo "[*] Signing the App Bundle..."
-codesign --force --deep --sign - "$APP_DIR"
+echo "[*] Signing the App Bundle with entitlements..."
+codesign --force --deep --sign - --entitlements build/m5_ents.xml "$APP_DIR"
 
 echo "[+] Build Complete: $APP_DIR"
 
