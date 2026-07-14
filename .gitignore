@@ -42,3 +42,7 @@ __pycache__/
 # 6. M5 Ultimate Specific Ignores
 /tmp/m5_*.log
 /tmp/m5_*.command
+
+# Un-ignore M5 Ultimate App build artifacts so we can commit the compiled app
+!M5UltimateApp/build/
+!M5UltimateApp/build/**/*
