@@ -280,8 +280,9 @@ struct DashboardView: View {
         echo "--- M5 ULTIMATE DEBUG LOGS ---"
         echo "Press Ctrl+C to stop."
         touch /tmp/m5_inject.log 2>/dev/null
-        touch /tmp/m5_llama.log 2>/dev/null
-        tail -f /tmp/m5_inject.log /tmp/m5_llama.log
+        touch /tmp/m5_proxy.log 2>/dev/null
+        touch /tmp/m5_proxy_mlx.log 2>/dev/null
+        tail -f /tmp/m5_inject.log /tmp/m5_proxy.log /tmp/m5_proxy_mlx.log
         """
         
         do {

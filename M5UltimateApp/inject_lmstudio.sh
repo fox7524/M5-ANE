@@ -1,29 +1,43 @@
 #!/bin/bash
 # M5 Ultimate - LM Studio Proxy Injector
-# This script creates a proxy wrapper to hijack LM Studio's subprocesses
-# without triggering macOS Hardened Runtime or Library Validation errors.
+
+exec >> /tmp/m5_inject.log 2>&1
+echo "--- Starting M5 Ultimate (${1:-inject}) at $(date) ---"
 
 MODE=$1
 USER_HOME=$(eval echo ~$SUDO_USER)
+M5_RESOURCES_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-# LM Studio's default paths
+# Paths
 LLAMA_SERVER_DIR="$USER_HOME/.cache/lm-studio/bin"
 
 if [ "$MODE" == "restore" ]; then
     echo "Restoring LM Studio to original state..."
     
-    # Restore GGUF (llama-server)
+    # 1. Restore GGUF
     if [ -f "$LLAMA_SERVER_DIR/llama-server.orig" ]; then
         mv -f "$LLAMA_SERVER_DIR/llama-server.orig" "$LLAMA_SERVER_DIR/llama-server"
         echo "llama-server restored."
     fi
     
-    # (Optional) Restore MLX if we added a proxy there
-    MLX_PYTHON=$(find "/Applications/LM Studio.app" -type f -name "python3.11.orig" 2>/dev/null | head -n 1)
-    if [ ! -z "$MLX_PYTHON" ]; then
-        mv -f "$MLX_PYTHON" "${MLX_PYTHON%.orig}"
-        echo "MLX python restored."
-    fi
+    # 2. Restore MLX
+    MLX_PATHS=$(find "$USER_HOME/.lmstudio/extensions/backends" -type d -name "lib" | grep "mlx/lib" 2>/dev/null || true)
+    for MLX_DIR in $MLX_PATHS; do
+        if [ -f "$MLX_DIR/libmlx.dylib.orig" ]; then
+            mv -f "$MLX_DIR/libmlx.dylib.orig" "$MLX_DIR/libmlx.dylib"
+        fi
+        if [ -f "$MLX_DIR/mlx.metallib.orig" ]; then
+            mv -f "$MLX_DIR/mlx.metallib.orig" "$MLX_DIR/mlx.metallib"
+        fi
+        
+        # Restore python module dynamic link path
+        MLX_PYTHON_SO=$(dirname "$MLX_DIR")/core.cpython-311-darwin.so
+        if [ -f "$MLX_PYTHON_SO" ]; then
+            install_name_tool -change @loader_path/lib/libmlx.dylib @rpath/libmlx.dylib "$MLX_PYTHON_SO" 2>/dev/null || true
+            codesign --force --sign - "$MLX_PYTHON_SO" 2>/dev/null || true
+        fi
+        echo "Restored MLX files in $MLX_DIR"
+    done
     
     exit 0
 fi
@@ -37,37 +51,37 @@ LATEST_LLAMA_SERVER=$(find "$LLAMA_SERVER_DIR" -type f -name "llama-server" ! -n
 if [ ! -z "$LATEST_LLAMA_SERVER" ]; then
     echo "Found llama-server at: $LATEST_LLAMA_SERVER"
     
-    # Backup original if not already backed up
-    if [ ! -f "${LATEST_LLAMA_SERVER}.orig" ]; then
+    # Check if the original is actually our broken insert_dylib patched version from yesterday
+    # If llama-server-bin exists, that's the true original!
+    if [ -f "$LLAMA_SERVER_DIR/llama-server-bin" ]; then
+        echo "Found true original llama-server-bin. Using it as backup."
+        cp -f "$LLAMA_SERVER_DIR/llama-server-bin" "$LLAMA_SERVER_DIR/llama-server.orig"
+    elif [ ! -f "${LATEST_LLAMA_SERVER}.orig" ]; then
         mv "$LATEST_LLAMA_SERVER" "${LATEST_LLAMA_SERVER}.orig"
     fi
     
     # Create the Proxy Script
-    cat << 'EOF' > "$LATEST_LLAMA_SERVER"
+    cat << EOF > "$LATEST_LLAMA_SERVER"
 #!/bin/bash
 # M5 Ultimate Proxy Wrapper
-# This script intercepts LM Studio's call to llama-server.
 
-ORIGINAL_SERVER="${0}.orig"
-CUSTOM_SERVER="/Applications/M5 Ultimate.app/Contents/Resources/payloads/llama/llama-server"
-CUSTOM_METAL_DIR="/Applications/M5 Ultimate.app/Contents/Resources/payloads/llama"
-
-# Here you can inject your ANE logic, set environment variables,
-# or even redirect the execution to your custom ANE-compiled llama-server!
+ORIGINAL_SERVER="\${0}.orig"
+CUSTOM_SERVER="$M5_RESOURCES_DIR/payloads/llama/llama-server"
+CUSTOM_METAL_DIR="$M5_RESOURCES_DIR/payloads/llama"
 
 export M5_ANE_ENABLED="1"
-export GGML_METAL_PATH_RESOURCES="$CUSTOM_METAL_DIR"
-export DYLD_LIBRARY_PATH="$CUSTOM_METAL_DIR:$DYLD_LIBRARY_PATH"
+export GGML_METAL_PATH_RESOURCES="\$CUSTOM_METAL_DIR"
+export DYLD_LIBRARY_PATH="\$CUSTOM_METAL_DIR:\$DYLD_LIBRARY_PATH"
 
 echo "[M5 Proxy] Intercepted llama-server launch!" > /tmp/m5_proxy.log
-echo "[M5 Proxy] Args: $@" >> /tmp/m5_proxy.log
+echo "[M5 Proxy] Args: \$@" >> /tmp/m5_proxy.log
 
-if [ -x "$CUSTOM_SERVER" ]; then
+if [ -x "\$CUSTOM_SERVER" ]; then
     echo "[M5 Proxy] Redirecting to custom ANE llama-server..." >> /tmp/m5_proxy.log
-    exec "$CUSTOM_SERVER" "$@"
+    exec "\$CUSTOM_SERVER" "\$@"
 else
-    echo "[M5 Proxy] Custom server not found! Falling back to original..." >> /tmp/m5_proxy.log
-    exec "$ORIGINAL_SERVER" "$@"
+    echo "[M5 Proxy] Custom server not found at \$CUSTOM_SERVER ! Falling back to original..." >> /tmp/m5_proxy.log
+    exec "\$ORIGINAL_SERVER" "\$@"
 fi
 EOF
 
@@ -77,33 +91,34 @@ else
     echo "llama-server not found. Skipping GGUF."
 fi
 
-# --- 2. Proxy MLX (Python) ---
-# Find the python binary used by MLX
-MLX_PYTHON=$(find "/Applications/LM Studio.app" -type f -name "python3.11" ! -name "*.orig" 2>/dev/null | head -n 1)
-
-if [ ! -z "$MLX_PYTHON" ]; then
-    echo "Found MLX Python at: $MLX_PYTHON"
-    
-    if [ ! -f "${MLX_PYTHON}.orig" ]; then
-        mv "$MLX_PYTHON" "${MLX_PYTHON}.orig"
-    fi
-    
-    cat << 'EOF' > "$MLX_PYTHON"
-#!/bin/bash
-# M5 Ultimate Proxy Wrapper for MLX
-
-ORIGINAL_PYTHON="${0}.orig"
-
-export M5_ANE_ENABLED="1"
-
-echo "[M5 Proxy] Intercepted MLX python launch!" > /tmp/m5_proxy_mlx.log
-exec "$ORIGINAL_PYTHON" "$@"
-EOF
-
-    chmod +x "$MLX_PYTHON"
-    echo "MLX Proxy injected successfully."
+# --- 2. Inject MLX ---
+MLX_PATHS=$(find "$USER_HOME/.lmstudio/extensions/backends" -type d -name "lib" | grep "mlx/lib" 2>/dev/null || true)
+if [ ! -z "$MLX_PATHS" ]; then
+    for MLX_DIR in $MLX_PATHS; do
+        echo "Injecting MLX payload into: $MLX_DIR"
+        
+        # Backup original MLX files
+        if [ ! -f "$MLX_DIR/libmlx.dylib.orig" ]; then
+            mv "$MLX_DIR/libmlx.dylib" "$MLX_DIR/libmlx.dylib.orig"
+        fi
+        if [ ! -f "$MLX_DIR/mlx.metallib.orig" ]; then
+            mv "$MLX_DIR/mlx.metallib" "$MLX_DIR/mlx.metallib.orig"
+        fi
+        
+        # Copy custom MLX files
+        cp -f "$M5_RESOURCES_DIR/payloads/mlx/libmlx.dylib" "$MLX_DIR/"
+        cp -f "$M5_RESOURCES_DIR/payloads/mlx/mlx.metallib" "$MLX_DIR/"
+        
+        # Fix dynamic link path for python module
+        MLX_PYTHON_SO=$(dirname "$MLX_DIR")/core.cpython-311-darwin.so
+        if [ -f "$MLX_PYTHON_SO" ]; then
+            install_name_tool -change @rpath/libmlx.dylib @loader_path/lib/libmlx.dylib "$MLX_PYTHON_SO" 2>/dev/null || true
+            codesign --force --sign - "$MLX_PYTHON_SO" 2>/dev/null || true
+        fi
+    done
+    echo "MLX Injection successfully completed."
 else
-    echo "MLX Python not found. Skipping MLX."
+    echo "MLX backend not found. Skipping MLX."
 fi
 
 echo "Injection complete."
