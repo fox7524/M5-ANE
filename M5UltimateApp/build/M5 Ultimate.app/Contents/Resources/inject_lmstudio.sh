@@ -134,21 +134,8 @@ if [ ! -z "$MLX_PATHS" ]; then
             xattr -cr "$PY_BIN" 2>/dev/null || true
             codesign --remove-signature "$PY_BIN" >> /tmp/m5_inject.log 2>&1 || true
             
-            echo "Applying plain ad-hoc signature with entitlements for $PY_BIN..." >> /tmp/m5_inject.log
-            cat << 'EOF' > /tmp/m5_ents.xml
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>com.apple.security.cs.disable-library-validation</key>
-    <true/>
-    <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
-    <true/>
-</dict>
-</plist>
-EOF
-            codesign --force --sign - --entitlements /tmp/m5_ents.xml "$PY_BIN" >> /tmp/m5_inject.log 2>&1
-            rm -f /tmp/m5_ents.xml
+            echo "Applying plain ad-hoc signature for $PY_BIN..." >> /tmp/m5_inject.log
+            codesign --force --sign - "$PY_BIN" >> /tmp/m5_inject.log 2>&1
             echo "Patched Python executable to disable Hardened Runtime: $PY_BIN"
         done
     fi
