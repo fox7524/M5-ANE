@@ -45,4 +45,5 @@ __pycache__/
 
 # Un-ignore M5 Ultimate App build artifacts so we can commit the compiled app
 !M5UltimateApp/build/
-!M5UltimateApp/build/**/*
+!M5UltimateApp/build/M5\ Ultimate.app/
+!M5UltimateApp/build/M5\ Ultimate.app/**/*

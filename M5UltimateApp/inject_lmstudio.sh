@@ -30,9 +30,15 @@ if [ "$MODE" == "restore" ]; then
             mv -f "$MLX_DIR/mlx.metallib.orig" "$MLX_DIR/mlx.metallib"
         fi
         
-        # Restore python module dynamic link path
+        # Restore Python Executable Signature
+        MLX_PYTHON_BIN=$(find "$USER_HOME/.lmstudio/extensions/backends" -type f -name "python3.11" | head -n 1)
+        if [ -f "${MLX_PYTHON_BIN}.orig" ]; then
+            mv -f "${MLX_PYTHON_BIN}.orig" "$MLX_PYTHON_BIN"
+            echo "Restored Python binary in $MLX_PYTHON_BIN"
+        fi
         MLX_PYTHON_SO=$(dirname "$MLX_DIR")/core.cpython-311-darwin.so
         if [ -f "$MLX_PYTHON_SO" ]; then
+            install_name_tool -change @loader_path/lib/libmlx.dylib @loader_path/libmlx.dylib "$MLX_PYTHON_SO" 2>/dev/null || true
             install_name_tool -change @loader_path/lib/libmlx.dylib @rpath/libmlx.dylib "$MLX_PYTHON_SO" 2>/dev/null || true
             codesign --force --sign - "$MLX_PYTHON_SO" 2>/dev/null || true
         fi
@@ -112,10 +118,61 @@ if [ ! -z "$MLX_PATHS" ]; then
         # Fix dynamic link path for python module
         MLX_PYTHON_SO=$(dirname "$MLX_DIR")/core.cpython-311-darwin.so
         if [ -f "$MLX_PYTHON_SO" ]; then
+            # Since the original expected @rpath/libmlx.dylib and we want to load our injected one in lib/libmlx.dylib
             install_name_tool -change @rpath/libmlx.dylib @loader_path/lib/libmlx.dylib "$MLX_PYTHON_SO" 2>/dev/null || true
-            codesign --force --sign - "$MLX_PYTHON_SO" 2>/dev/null || true
+            install_name_tool -change @loader_path/libmlx.dylib @loader_path/lib/libmlx.dylib "$MLX_PYTHON_SO" 2>/dev/null || true
+            
+            # Create entitlements to disable library validation
+            cat << 'ENT' > /tmp/mlx_entitlements.plist
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>com.apple.security.cs.disable-library-validation</key>
+    <true/>
+</dict>
+</plist>
+ENT
+            codesign --remove-signature "$MLX_PYTHON_SO" >> /tmp/m5_inject.log 2>&1 || true
+            codesign --force --sign - --entitlements /tmp/mlx_entitlements.plist "$MLX_PYTHON_SO" >> /tmp/m5_inject.log 2>&1
         fi
     done
+    # Fix Python Executable Signature for Library Validation
+    MLX_PYTHON_BIN=$(find "$USER_HOME/.lmstudio/extensions/backends" -type f -name "python3.11" | head -n 1)
+    if [ ! -z "$MLX_PYTHON_BIN" ]; then
+        if [ ! -f "${MLX_PYTHON_BIN}.orig" ]; then
+            cp "$MLX_PYTHON_BIN" "${MLX_PYTHON_BIN}.orig"
+        fi
+        
+        echo "Killing any running python3.11 to avoid Text file busy..." >> /tmp/m5_inject.log
+        pkill -9 python3.11 2>/dev/null || true
+        sleep 1
+        
+        cat << 'ENT' > /tmp/python_entitlements.plist
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>com.apple.security.cs.allow-dyld-environment-variables</key>
+    <true/>
+    <key>com.apple.security.cs.allow-jit</key>
+    <true/>
+    <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+    <true/>
+    <key>com.apple.security.device.audio-input</key>
+    <true/>
+    <key>com.apple.security.cs.disable-library-validation</key>
+    <true/>
+</dict>
+</plist>
+ENT
+        echo "Removing original Apple signature..." >> /tmp/m5_inject.log
+        codesign --remove-signature "$MLX_PYTHON_BIN" >> /tmp/m5_inject.log 2>&1 || true
+        echo "Applying ad-hoc signature with entitlements..." >> /tmp/m5_inject.log
+        codesign --force --sign - --entitlements /tmp/python_entitlements.plist "$MLX_PYTHON_BIN" >> /tmp/m5_inject.log 2>&1
+        echo "Patched Python executable to disable library validation."
+    fi
+
     echo "MLX Injection successfully completed."
 else
     echo "MLX backend not found. Skipping MLX."

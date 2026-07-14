@@ -18,7 +18,7 @@
 		</data>
 		<key>Resources/inject_lmstudio.sh</key>
 		<data>
-		ECPNVgmeiqDhoXjaCk4QBUX4kns=
+		/7cFX3AaEvdgwEseTXmqxCI6YB4=
 		</data>
 		<key>Resources/insert_dylib</key>
 		<data>
@@ -31,6 +31,10 @@
 		<key>Resources/patch_ollama.sh</key>
 		<data>
 		9pMAt9HxiTjUe/r+R5KCJr24pBc=
+		</data>
+		<key>Resources/payloads/llama/ggml-metal.metal</key>
+		<data>
+		h2+fl+D7dVi5H3U6qVfFQ0Syd4A=
 		</data>
 		<key>Resources/payloads/llama/libggml-base.0.16.0.dylib</key>
 		<data>
@@ -70,15 +74,15 @@
 		</data>
 		<key>Resources/payloads/llama/libggml-metal.0.16.0.dylib</key>
 		<data>
-		0dtgO/XeF6/77xuckB2uXoLQAu4=
+		Mz430JE/PhRsSHLfLnEO1OZzeZI=
 		</data>
 		<key>Resources/payloads/llama/libggml-metal.0.dylib</key>
 		<data>
-		0dtgO/XeF6/77xuckB2uXoLQAu4=
+		Mz430JE/PhRsSHLfLnEO1OZzeZI=
 		</data>
 		<key>Resources/payloads/llama/libggml-metal.dylib</key>
 		<data>
-		0dtgO/XeF6/77xuckB2uXoLQAu4=
+		Mz430JE/PhRsSHLfLnEO1OZzeZI=
 		</data>
 		<key>Resources/payloads/llama/libggml.0.16.0.dylib</key>
 		<data>
@@ -166,7 +170,7 @@
 		</data>
 		<key>Resources/payloads/mlx/libmlx.dylib</key>
 		<data>
-		EX1steqoDbPdLudlB+GRVWgC2qw=
+		spqfBUQ99z6S+3KL4V0CRpYNc6A=
 		</data>
 		<key>Resources/payloads/mlx/mlx.metallib</key>
 		<data>
@@ -204,7 +208,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			Tcu/bf/4hEfSJqaAXz6pmsHoGm7/r14jKe1cy/XxVZs=
+			5Qwjvd2NOOn5qRaVPQZIDw+/U29V5oUmRBW0sTIVBzU=
 			</data>
 		</dict>
 		<key>Resources/insert_dylib</key>
@@ -226,6 +230,13 @@
 			<key>hash2</key>
 			<data>
 			fdb4FKwUtPUlG/Z9+cR4TBNrt5WoumGrJ1lPfe4j1vU=
+			</data>
+		</dict>
+		<key>Resources/payloads/llama/ggml-metal.metal</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			CwigYMSdgCdfXfQjK+J0rlTm4NZcxKHGJFFSXxRelWU=
 			</data>
 		</dict>
 		<key>Resources/payloads/llama/libggml-base.0.16.0.dylib</key>
@@ -295,21 +306,21 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			CbOPlO3tmPc9mKW6A0Bumkz3Q4YoPe4fR6mTmeWDQKA=
+			cEE9J+GmGZ8BXXgI484S8qSzm/oLjaKJmVoCNm5R4uE=
 			</data>
 		</dict>
 		<key>Resources/payloads/llama/libggml-metal.0.dylib</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			CbOPlO3tmPc9mKW6A0Bumkz3Q4YoPe4fR6mTmeWDQKA=
+			cEE9J+GmGZ8BXXgI484S8qSzm/oLjaKJmVoCNm5R4uE=
 			</data>
 		</dict>
 		<key>Resources/payloads/llama/libggml-metal.dylib</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			CbOPlO3tmPc9mKW6A0Bumkz3Q4YoPe4fR6mTmeWDQKA=
+			cEE9J+GmGZ8BXXgI484S8qSzm/oLjaKJmVoCNm5R4uE=
 			</data>
 		</dict>
 		<key>Resources/payloads/llama/libggml.0.16.0.dylib</key>
@@ -463,7 +474,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			YCf0g/Hnn7YUZO9GRl/1gfRsLEQyZ6/EMp35wlJEBuM=
+			qb0KAJRVn6CyuOLKAdreGzlPoTAoRvcGpauPPDciMD4=
 			</data>
 		</dict>
 		<key>Resources/payloads/mlx/mlx.metallib</key>

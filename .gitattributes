@@ -6,3 +6,5 @@
 **/M5[[:space:]]Ultimate filter=lfs diff=lfs merge=lfs -text
 *.bin filter=lfs diff=lfs merge=lfs -text
 *.gguf filter=lfs diff=lfs merge=lfs -text
+llama-server filter=lfs diff=lfs merge=lfs -text
+M5[[:space:]]Ultimate filter=lfs diff=lfs merge=lfs -text
