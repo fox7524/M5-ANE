@@ -99,6 +99,11 @@ if [ ! -z "$MLX_PATHS" ]; then
         cp -f "$M5_RESOURCES_DIR/payloads/mlx/libmlx.dylib" "$MLX_DIR/"
         cp -f "$M5_RESOURCES_DIR/payloads/mlx/mlx.metallib" "$MLX_DIR/"
         
+        # Remove quarantine and apply ad-hoc signature to libmlx.dylib
+        xattr -cr "$MLX_DIR/libmlx.dylib" 2>/dev/null || true
+        codesign --remove-signature "$MLX_DIR/libmlx.dylib" >> /tmp/m5_inject.log 2>&1 || true
+        codesign --force --sign - "$MLX_DIR/libmlx.dylib" >> /tmp/m5_inject.log 2>&1
+        
         # Remove quarantine
         xattr -cr "$MLX_DIR" 2>/dev/null || true
         
