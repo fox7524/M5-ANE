@@ -61,6 +61,22 @@ const HOOK_PAYLOAD = `// --- M5 ULTIMATE HOOK START ---
 // --- M5 ULTIMATE HOOK END ---
 `;
 
+function removeHook(filePath) {
+    if (!fs.existsSync(filePath)) return;
+    let content = fs.readFileSync(filePath, 'utf8');
+    if (content.includes('M5_HOOK_ACTIVE')) {
+        console.log(`[*] Removing hook from ${path.basename(filePath)}...`);
+        const startIdx = content.indexOf('// --- M5 ULTIMATE HOOK START ---');
+        const endIdx = content.indexOf('// --- M5 ULTIMATE HOOK END ---\n');
+        if (startIdx !== -1 && endIdx !== -1) {
+            content = content.substring(0, startIdx) + content.substring(endIdx + 32);
+            // DO NOT UNLINK HERE, JUST WRITE OVER IT
+            fs.writeFileSync(filePath, content, 'utf8');
+            console.log(`[+] Successfully removed hook from ${path.basename(filePath)}`);
+        }
+    }
+}
+
 function injectHook(filePath) {
     if (!fs.existsSync(filePath)) {
         console.warn(`[!] File not found: ${filePath}`);
@@ -69,14 +85,14 @@ function injectHook(filePath) {
     let content = fs.readFileSync(filePath, 'utf8');
     if (content.includes('M5_HOOK_ACTIVE')) {
         console.log(`[*] Hook already present in ${path.basename(filePath)}, removing old hook...`);
-        // Remove old hook to update it
         const startIdx = content.indexOf('// --- M5 ULTIMATE HOOK START ---');
-        const endIdx = content.indexOf('// --- M5 ULTIMATE HOOK END ---\\n');
+        const endIdx = content.indexOf('// --- M5 ULTIMATE HOOK END ---\n');
         if (startIdx !== -1 && endIdx !== -1) {
             content = content.substring(0, startIdx) + content.substring(endIdx + 32);
         }
     }
     content = HOOK_PAYLOAD + content;
+    // DO NOT UNLINK HERE, JUST WRITE OVER IT
     fs.writeFileSync(filePath, content, 'utf8');
     console.log(`[+] Successfully injected hook into ${path.basename(filePath)}`);
 }
@@ -94,7 +110,7 @@ function stripHardenedRuntime() {
 
 function deployPayloads() {
     console.log("[*] Deploying M5 Ultimate Payloads...");
-    const userHome = process.env.HOME || process.env.USERPROFILE;
+    const userHome = process.env.REAL_HOME || process.env.HOME || process.env.USERPROFILE;
     
     // GGUF Payload
     const llamaDir = path.join(userHome, '.cache/lm-studio/bin');
@@ -141,9 +157,9 @@ function deployPayloads() {
 
 function fixPythonSignatures() {
     console.log("[*] Fixing Python signatures for MLX Library Validation...");
-    const userHome = process.env.HOME || process.env.USERPROFILE;
+    const userHome = process.env.REAL_HOME || process.env.HOME || process.env.USERPROFILE;
     const entsPath = '/tmp/m5_ents.xml';
-    fs.writeFileSync(entsPath, \`<?xml version="1.0" encoding="UTF-8"?>
+    fs.writeFileSync(entsPath, `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
@@ -154,7 +170,7 @@ function fixPythonSignatures() {
     <key>com.apple.security.cs.allow-dyld-environment-variables</key>
     <true/>
 </dict>
-</plist>\`);
+</plist>`);
 
     const backendsDir = path.join(userHome, '.lmstudio/extensions/backends');
     if (fs.existsSync(backendsDir)) {
@@ -172,14 +188,14 @@ function fixPythonSignatures() {
         }
         const pythons = findPythons(backendsDir);
         for (const py of pythons) {
-            console.log(\`[*] Re-signing Python with runtime & entitlements: \${py}\`);
+            console.log(`[*] Re-signing Python with runtime & entitlements: ${py}`);
             try {
-                cp.execSync(\`xattr -cr "\${py}" 2>/dev/null || true\`);
+                cp.execSync(`xattr -cr "${py}" 2>/dev/null || true`);
                 // CRITICAL FIX: --options runtime is required for disable-library-validation to work on ad-hoc signatures!
-                cp.execSync(\`codesign --force --options runtime --sign - --entitlements "\${entsPath}" "\${py}"\`, { stdio: 'pipe' });
-                console.log(\`[+] Fixed Library Validation for \${path.basename(py)}\`);
+                cp.execSync(`codesign --force --options runtime --sign - --entitlements "${entsPath}" "${py}"`, { stdio: 'pipe' });
+                console.log(`[+] Fixed Library Validation for ${path.basename(py)}`);
             } catch (err) {
-                console.error(\`[-] Failed to sign \${py}\`);
+                console.error(`[-] Failed to sign ${py}`);
             }
         }
     } else {
@@ -189,7 +205,7 @@ function fixPythonSignatures() {
 
 function restoreOldProxy() {
     console.log("[*] Cleaning up old C++ proxy files (if any)...");
-    const userHome = process.env.HOME || process.env.USERPROFILE;
+    const userHome = process.env.REAL_HOME || process.env.HOME || process.env.USERPROFILE;
     const llamaDir = path.join(userHome, '.cache/lm-studio/bin');
     if (fs.existsSync(llamaDir)) {
         const orig = path.join(llamaDir, 'llama-server.orig');
@@ -202,6 +218,22 @@ function restoreOldProxy() {
 }
 
 console.log("=== M5 Ultimate Core Cracker ===");
+
+if (process.argv.includes('--revert')) {
+    console.log("[*] Reverting M5 Ultimate Injection...");
+    removeHook(MAIN_JS);
+    removeHook(WORKER_JS);
+    restoreOldProxy();
+    
+    const userHome = process.env.REAL_HOME || process.env.HOME || process.env.USERPROFILE;
+    const aneServer = path.join(userHome, '.cache/lm-studio/bin/llama-server.ane');
+    if (fs.existsSync(aneServer)) {
+        try { fs.unlinkSync(aneServer); console.log("[+] Removed llama-server.ane"); } catch(e){}
+    }
+    console.log("=== Revert Complete ===");
+    process.exit(0);
+}
+
 restoreOldProxy();
 deployPayloads();
 injectHook(MAIN_JS);

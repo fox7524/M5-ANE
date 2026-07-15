@@ -174,9 +174,9 @@ struct DashboardView: View {
     func checkInjectionStatus() {
         let fileManager = FileManager.default
         let homeDir = NSHomeDirectory()
-        let origGGUF = homeDir + "/.cache/lm-studio/bin/llama-server.orig"
+        let aneGGUF = homeDir + "/.cache/lm-studio/bin/llama-server.ane"
         
-        let isGGUFInjected = fileManager.fileExists(atPath: origGGUF)
+        let isGGUFInjected = fileManager.fileExists(atPath: aneGGUF)
         
         // If GGUF is injected, consider the system injected.
         let status = isGGUFInjected
@@ -271,22 +271,30 @@ struct DashboardView: View {
     }
     
     func injectLMStudio() {
-        let scriptPath = Bundle.main.url(forResource: "crack_lmstudio", withExtension: "js")?.path ?? ""
-        guard !scriptPath.isEmpty else { return }
-        
-        let script = "do shell script \"export PATH=/usr/local/bin:/opt/homebrew/bin:$PATH; node \" & quoted form of \"\(scriptPath)\" with administrator privileges without altering line endings"
-        
-        var error: NSDictionary?
-        if let appleScript = NSAppleScript(source: script) {
-            appleScript.executeAndReturnError(&error)
-            if error == nil {
-                DispatchQueue.main.async {
-                    self.isInjected = true
-                    UserDefaults.standard.set(self.isInjected, forKey: "isInjected")
-                    NotificationCenter.default.post(name: NSNotification.Name("InjectStatusChanged"), object: self.isInjected)
+        DispatchQueue.global(qos: .userInitiated).async {
+            let scriptPath = Bundle.main.url(forResource: "crack_lmstudio", withExtension: "js")?.path ?? ""
+            guard !scriptPath.isEmpty else { return }
+            
+            let homeDir = NSHomeDirectory()
+            let isRevert = UserDefaults.standard.bool(forKey: "isInjected")
+            let actionArg = isRevert ? "--revert" : ""
+            
+            let script = "do shell script \"export PATH=/usr/local/bin:/opt/homebrew/bin:$PATH; export REAL_HOME='\(homeDir)'; sudo node \" & quoted form of \"\(scriptPath)\" & \" \(actionArg) > /tmp/m5_inject.log 2>&1\" with administrator privileges without altering line endings"
+            
+            var error: NSDictionary?
+            if let appleScript = NSAppleScript(source: script) {
+                appleScript.executeAndReturnError(&error)
+                if error == nil {
+                    DispatchQueue.main.async {
+                        self.isInjected = !isRevert
+                        UserDefaults.standard.set(self.isInjected, forKey: "isInjected")
+                        NotificationCenter.default.post(name: NSNotification.Name("InjectStatusChanged"), object: self.isInjected)
+                    }
+                } else {
+                    DispatchQueue.main.async {
+                        print("AppleScript Error: \(String(describing: error))")
+                    }
                 }
-            } else {
-                print("AppleScript Error: \(String(describing: error))")
             }
         }
     }
@@ -485,22 +493,33 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     @objc func injectLMStudio() {
-        let scriptPath = Bundle.main.url(forResource: "crack_lmstudio", withExtension: "js")?.path ?? ""
-        guard !scriptPath.isEmpty else {
-            print("Injection script not found in bundle!")
-            return
-        }
-        
-        let script = "do shell script \"export PATH=/usr/local/bin:/opt/homebrew/bin:$PATH; node \" & quoted form of \"\(scriptPath)\" with administrator privileges without altering line endings"
-        var error: NSDictionary?
-        if let appleScript = NSAppleScript(source: script) {
-            appleScript.executeAndReturnError(&error)
-            if error == nil {
-                let newState = true
-                UserDefaults.standard.set(newState, forKey: "isInjected")
-                NotificationCenter.default.post(name: NSNotification.Name("InjectStatusChanged"), object: newState)
-            } else {
-                print("Menu AppleScript Error: \(String(describing: error))")
+        DispatchQueue.global(qos: .userInitiated).async {
+            let scriptPath = Bundle.main.url(forResource: "crack_lmstudio", withExtension: "js")?.path ?? ""
+            guard !scriptPath.isEmpty else {
+                print("Injection script not found in bundle!")
+                return
+            }
+            
+            let homeDir = NSHomeDirectory()
+            let isRevert = UserDefaults.standard.bool(forKey: "isInjected")
+            let actionArg = isRevert ? "--revert" : ""
+            
+            let script = "do shell script \"export PATH=/usr/local/bin:/opt/homebrew/bin:$PATH; export REAL_HOME='\(homeDir)'; sudo node \" & quoted form of \"\(scriptPath)\" & \" \(actionArg) > /tmp/m5_inject.log 2>&1\" with administrator privileges without altering line endings"
+            
+            var error: NSDictionary?
+            if let appleScript = NSAppleScript(source: script) {
+                appleScript.executeAndReturnError(&error)
+                if error == nil {
+                    DispatchQueue.main.async {
+                        let newState = !isRevert
+                        UserDefaults.standard.set(newState, forKey: "isInjected")
+                        NotificationCenter.default.post(name: NSNotification.Name("InjectStatusChanged"), object: newState)
+                    }
+                } else {
+                    DispatchQueue.main.async {
+                        print("Menu AppleScript Error: \(String(describing: error))")
+                    }
+                }
             }
         }
     }
