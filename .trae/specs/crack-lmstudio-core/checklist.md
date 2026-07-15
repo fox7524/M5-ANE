@@ -1,0 +1,4 @@
+- [ ] `crack_lmstudio.js` successfully prepends the hook to `index.js` and `llmworker.js` without syntax errors.
+- [ ] Hardened Runtime is successfully stripped from `LM Studio.app` using `codesign`.
+- [ ] MLX models load without "Team ID mismatch" Library Validation errors.
+- [ ] GGUF models successfully receive the `--tensor-split 18,20` arguments via the Javascript hook.

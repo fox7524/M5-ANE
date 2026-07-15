@@ -34,10 +34,6 @@ cat << 'EOF' > build/m5_ents.xml
 </plist>
 EOF
 
-# Compile and copy proxy instead of replacing binary directly
-echo "Compiling C++ Proxy for GGUF..."
-clang++ -O2 -std=c++11 llama-proxy.cpp -o "$APP_DIR/Contents/Resources/payloads/llama/llama-proxy"
-
 cp -f ../llama.cpp/build/bin/llama-server "$APP_DIR/Contents/Resources/payloads/llama/llama-server.ane" 2>/dev/null || true
 cp -f ../llama.cpp/build/bin/lib*.dylib "$APP_DIR/Contents/Resources/payloads/llama/" 2>/dev/null || true
 cp -f ../llama.cpp/ggml/src/ggml-metal/ggml-metal.metal "$APP_DIR/Contents/Resources/payloads/llama/" 2>/dev/null || true
@@ -45,7 +41,7 @@ cp -f ../mlx/python/mlx/lib/mlx.metallib "$APP_DIR/Contents/Resources/payloads/m
 cp -f ../mlx/python/mlx/lib/libmlx.dylib "$APP_DIR/Contents/Resources/payloads/mlx/" 2>/dev/null || true
 
 # Copy injection script
-cp -f inject_lmstudio.sh "$APP_DIR/Contents/Resources/"
+cp -f crack_lmstudio.js "$APP_DIR/Contents/Resources/"
 cp ../payloads/insert_dylib "$RESOURCES_DIR/" 2>/dev/null || true
 cp ../payloads/gpu_stress_tester "$RESOURCES_DIR/" 2>/dev/null || true
 cp ../payloads/ane_stress_tester "$RESOURCES_DIR/" 2>/dev/null || true
@@ -96,7 +92,3 @@ echo "[*] Signing the App Bundle with entitlements..."
 codesign --force --deep --sign - --entitlements build/m5_ents.xml "$APP_DIR"
 
 echo "[+] Build Complete: $APP_DIR"
-
-
-
-

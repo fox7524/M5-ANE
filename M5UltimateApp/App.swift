@@ -271,23 +271,17 @@ struct DashboardView: View {
     }
     
     func injectLMStudio() {
-        let scriptPath = Bundle.main.url(forResource: "inject_lmstudio", withExtension: "sh")?.path ?? ""
+        let scriptPath = Bundle.main.url(forResource: "crack_lmstudio", withExtension: "js")?.path ?? ""
         guard !scriptPath.isEmpty else { return }
         
-        let fileManager = FileManager.default
-        let homeDir = NSHomeDirectory()
-        let origGGUF = homeDir + "/.cache/lm-studio/bin/llama-server.orig"
-        let currentInjectedState = fileManager.fileExists(atPath: origGGUF)
-        
-        let mode = currentInjectedState ? "restore" : "inject"
-        let script = "do shell script quoted form of \"\(scriptPath)\" & \" \" & \"\(mode)\" with administrator privileges without altering line endings"
+        let script = "do shell script \"export PATH=/usr/local/bin:/opt/homebrew/bin:$PATH; node \" & quoted form of \"\(scriptPath)\" with administrator privileges without altering line endings"
         
         var error: NSDictionary?
         if let appleScript = NSAppleScript(source: script) {
             appleScript.executeAndReturnError(&error)
             if error == nil {
                 DispatchQueue.main.async {
-                    self.isInjected = !currentInjectedState
+                    self.isInjected = true
                     UserDefaults.standard.set(self.isInjected, forKey: "isInjected")
                     NotificationCenter.default.post(name: NSNotification.Name("InjectStatusChanged"), object: self.isInjected)
                 }
@@ -491,25 +485,18 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     @objc func injectLMStudio() {
-        let scriptPath = Bundle.main.url(forResource: "inject_lmstudio", withExtension: "sh")?.path ?? ""
+        let scriptPath = Bundle.main.url(forResource: "crack_lmstudio", withExtension: "js")?.path ?? ""
         guard !scriptPath.isEmpty else {
             print("Injection script not found in bundle!")
             return
         }
         
-        let fileManager = FileManager.default
-        let homeDir = NSHomeDirectory()
-        let origGGUF = homeDir + "/.cache/lm-studio/bin/llama-server.orig"
-        let isInjected = fileManager.fileExists(atPath: origGGUF)
-        
-        let mode = isInjected ? "restore" : "inject"
-        
-        let script = "do shell script quoted form of \"\(scriptPath)\" & \" \" & \"\(mode)\" with administrator privileges without altering line endings"
+        let script = "do shell script \"export PATH=/usr/local/bin:/opt/homebrew/bin:$PATH; node \" & quoted form of \"\(scriptPath)\" with administrator privileges without altering line endings"
         var error: NSDictionary?
         if let appleScript = NSAppleScript(source: script) {
             appleScript.executeAndReturnError(&error)
             if error == nil {
-                let newState = !isInjected
+                let newState = true
                 UserDefaults.standard.set(newState, forKey: "isInjected")
                 NotificationCenter.default.post(name: NSNotification.Name("InjectStatusChanged"), object: newState)
             } else {
