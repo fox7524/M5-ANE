@@ -66,14 +66,13 @@ function removeHook(filePath) {
     let content = fs.readFileSync(filePath, 'utf8');
     if (content.includes('M5_HOOK_ACTIVE')) {
         console.log(`[*] Removing hook from ${path.basename(filePath)}...`);
-        const startIdx = content.indexOf('// --- M5 ULTIMATE HOOK START ---');
-        const endIdx = content.indexOf('// --- M5 ULTIMATE HOOK END ---\n');
-        if (startIdx !== -1 && endIdx !== -1) {
-            content = content.substring(0, startIdx) + content.substring(endIdx + 32);
-            // DO NOT UNLINK HERE, JUST WRITE OVER IT
-            fs.writeFileSync(filePath, content, 'utf8');
-            console.log(`[+] Successfully removed hook from ${path.basename(filePath)}`);
-        }
+        const regex = /\/\/ --- M5 ULTIMATE HOOK START ---[\s\S]*?\/\/ --- M5 ULTIMATE HOOK END ---\s*/;
+        content = content.replace(regex, '');
+        try {
+            fs.unlinkSync(filePath);
+        } catch (e) {}
+        fs.writeFileSync(filePath, content, 'utf8');
+        console.log(`[+] Successfully removed hook from ${path.basename(filePath)}`);
     }
 }
 
@@ -85,14 +84,13 @@ function injectHook(filePath) {
     let content = fs.readFileSync(filePath, 'utf8');
     if (content.includes('M5_HOOK_ACTIVE')) {
         console.log(`[*] Hook already present in ${path.basename(filePath)}, removing old hook...`);
-        const startIdx = content.indexOf('// --- M5 ULTIMATE HOOK START ---');
-        const endIdx = content.indexOf('// --- M5 ULTIMATE HOOK END ---\n');
-        if (startIdx !== -1 && endIdx !== -1) {
-            content = content.substring(0, startIdx) + content.substring(endIdx + 32);
-        }
+        const regex = /\/\/ --- M5 ULTIMATE HOOK START ---[\s\S]*?\/\/ --- M5 ULTIMATE HOOK END ---\s*/;
+        content = content.replace(regex, '');
     }
     content = HOOK_PAYLOAD + content;
-    // DO NOT UNLINK HERE, JUST WRITE OVER IT
+    try {
+        fs.unlinkSync(filePath);
+    } catch (e) {}
     fs.writeFileSync(filePath, content, 'utf8');
     console.log(`[+] Successfully injected hook into ${path.basename(filePath)}`);
 }
@@ -211,8 +209,13 @@ function restoreOldProxy() {
         const orig = path.join(llamaDir, 'llama-server.orig');
         const proxy = path.join(llamaDir, 'llama-server');
         if (fs.existsSync(orig)) {
-            fs.copyFileSync(orig, proxy);
-            console.log("[+] Restored original llama-server in cache.");
+            try {
+                fs.copyFileSync(orig, proxy);
+                fs.unlinkSync(orig);
+                console.log("[+] Restored original llama-server in cache and cleaned .orig backup.");
+            } catch(e) {
+                console.error("[-] Failed to restore old proxy:", e);
+            }
         }
     }
 }

@@ -174,9 +174,9 @@ struct DashboardView: View {
     func checkInjectionStatus() {
         let fileManager = FileManager.default
         let homeDir = NSHomeDirectory()
-        let aneGGUF = homeDir + "/.cache/lm-studio/bin/llama-server.ane"
+        let aneServer = homeDir + "/.cache/lm-studio/bin/llama-server.ane"
         
-        let isGGUFInjected = fileManager.fileExists(atPath: aneGGUF)
+        let isGGUFInjected = fileManager.fileExists(atPath: aneServer)
         
         // If GGUF is injected, consider the system injected.
         let status = isGGUFInjected
