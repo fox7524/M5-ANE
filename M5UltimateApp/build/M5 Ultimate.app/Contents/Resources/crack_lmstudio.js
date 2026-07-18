@@ -61,6 +61,16 @@ const HOOK_PAYLOAD = `// --- M5 ULTIMATE HOOK START ---
 // --- M5 ULTIMATE HOOK END ---
 `;
 
+function safeWrite(filePath, content) {
+    const tmpPath = '/tmp/m5_tmp_' + path.basename(filePath);
+    fs.writeFileSync(tmpPath, content, 'utf8');
+    try {
+        cp.execSync(`rm -f "${filePath}"`);
+    } catch(e) {}
+    cp.execSync(`cp "${tmpPath}" "${filePath}"`);
+    cp.execSync(`rm -f "${tmpPath}"`);
+}
+
 function removeHook(filePath) {
     if (!fs.existsSync(filePath)) return;
     let content = fs.readFileSync(filePath, 'utf8');
@@ -68,10 +78,7 @@ function removeHook(filePath) {
         console.log(`[*] Removing hook from ${path.basename(filePath)}...`);
         const regex = /\/\/ --- M5 ULTIMATE HOOK START ---[\s\S]*?\/\/ --- M5 ULTIMATE HOOK END ---\s*/;
         content = content.replace(regex, '');
-        try {
-            fs.unlinkSync(filePath);
-        } catch (e) {}
-        fs.writeFileSync(filePath, content, 'utf8');
+        safeWrite(filePath, content);
         console.log(`[+] Successfully removed hook from ${path.basename(filePath)}`);
     }
 }
@@ -88,10 +95,7 @@ function injectHook(filePath) {
         content = content.replace(regex, '');
     }
     content = HOOK_PAYLOAD + content;
-    try {
-        fs.unlinkSync(filePath);
-    } catch (e) {}
-    fs.writeFileSync(filePath, content, 'utf8');
+    safeWrite(filePath, content);
     console.log(`[+] Successfully injected hook into ${path.basename(filePath)}`);
 }
 
