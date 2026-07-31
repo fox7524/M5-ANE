@@ -51,10 +51,10 @@ This research and development initiative relies heavily on the foundational work
 * **Fox (M5 Ultimate / M6-Killer Initiative):** Principal architect of the concurrent ANE/GPU zero-copy tensor splitting concept, JS Hooking infrastructures, and the reverse-engineering methodologies utilized to bypass macOS Library Validation and SIP restrictions. Proper attribution is required for any forks or derivations of this repository.
 
 **Foundational Research:**
-* **[maderix](https://github.com/maderix):** Special thanks for the foundational M4 repository and research, which provided critical technical inspiration and groundwork for the architectural direction of this project.
+* **[maderix](https://github.com/maderix):** Special thanks for the foundational [ANE](https://github.com/maderix/ANE) repository and research, which provided critical technical inspiration and groundwork for the architectural direction of this project.
 
-**Open Source Projects:**
-* **[ANE-main](https://github.com/seba-1511/ANE-main):** For the initial Apple Neural Engine reverse-engineering bridge and hardware communication protocols.
+**Open Source Projects Used In This Project:**
+* **[ANE](https://github.com/maderix/ANE):** For the initial Apple Neural Engine reverse-engineering bridge and hardware communication protocols.
 * **[llama.cpp](https://github.com/ggerganov/llama.cpp):** For the highly optimized GGUF inference backend.
 * **[MLX](https://github.com/ml-explore/mlx):** For the Apple Silicon optimized machine learning array framework.
 * **[m1n1](https://github.com/AsahiLinux/m1n1):** For the bare-metal hardware discovery and architectural analysis of Apple Silicon.
