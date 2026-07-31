@@ -45,8 +45,12 @@ Kullanıcının sistemi yönettiği Swift tabanlı arayüzdür. Benchmark başla
 
 ## 🌟 Credits & Acknowledgments
 
-Bu proje, açık kaynak topluluğunun değerli çalışmaları olmadan mümkün olamazdı. Aşağıdaki projelere ve arkasındaki ekiplere özel olarak teşekkür ederiz:
+Bu proje, açık kaynak topluluğunun değerli çalışmaları ve özverili mühendislik çabaları olmadan mümkün olamazdı. 
 
+**Ana Geliştirici / Yaratıcı:**
+* **Fox (M5 Ultimate / M6-Killer Initiative):** Projenin ana mimarisi, ANE ve GPU eşzamanlı tensör bölme (zero-copy tensor splitting) konsepti, JS Hooking mekanizmaları ve macOS kütüphane kısıtlamalarını (Library Validation/SIP) aşan özel tersine mühendislik yöntemlerinin geliştiricisi. Bu repoyu fork'larken veya kodları kullanırken lütfen ana geliştirici olarak referans veriniz.
+
+**Açık Kaynak Projeler ve Teşekkürler:**
 * **[ANE-main](https://github.com/seba-1511/ANE-main):** Apple Neural Engine (ANE) tersine mühendislik köprüsü (reverse engineering bridge) ve donanımsal iletişim altyapısı için.
 * **[llama.cpp](https://github.com/ggerganov/llama.cpp):** Güçlü ve verimli GGUF backend altyapısı için.
 * **[MLX](https://github.com/ml-explore/mlx):** Apple Silicon için optimize edilmiş, makine öğrenimi array (dizi) altyapısı için.
@@ -55,8 +59,16 @@ Bu proje, açık kaynak topluluğunun değerli çalışmaları olmadan mümkün 
 ---
 
 ## 📄 License & Attribution
-**All Rights Reserved.**
-This project is currently in the Research & Development (R&D) phase. The core concept of **Zero-Copy Tensor Splitting between GPU and ANE via MTLBuffer pointer manipulation** is a proprietary architectural design. 
-Commercial use, unauthorized copying, or distribution of this specific logic is strictly prohibited without explicit permission.
 
-The underlying open-source frameworks (`llama.cpp`, `MLX`, `m1n1`) remain under their respective licenses (MIT, Apache, etc.).
+Bu proje **Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)** lisansı ile lisanslanmıştır. 
+
+Bu lisansın anlamı şudur:
+✅ **İlham Alın ve Kullanın:** Bu projeyi kendi kişisel projelerinizde kullanabilir, kodları inceleyip öğrenebilirsiniz.
+✅ **Değiştirin ve Geliştirin (Remix & Adapt):** Kodları modifiye edebilir, kendi versiyonlarınızı oluşturabilirsiniz.
+✅ **Kredi Verin (Attribution):** Bu projeyi veya kodlarını kullanırken **kesinlikle** orijinal yaratıcıya (Fox - M5 Ultimate) atıfta bulunmalı ve orijinal repoya link vermelisiniz. Krediyi silmek veya kendinizinmiş gibi göstermek ("çalmak") kesinlikle yasaktır.
+❌ **Ticari Kullanım Yasaktır (NonCommercial):** Bu proje üzerinden, doğrudan veya dolaylı yoldan **hiçbir şekilde para kazanılamaz**. Kodları ticari bir ürüne dönüştüremez, satamaz veya gelir elde eden bir platformda kullanamazsınız.
+🔗 **Aynı Şartlarla Paylaşın (ShareAlike):** Bu kodları değiştirip paylaşırsanız, sizin projeniz de tam olarak aynı CC BY-NC-SA 4.0 lisansına sahip olmak zorundadır.
+
+*Not: Proje içinde kullanılan üçüncü parti kütüphaneler (`llama.cpp`, `MLX`, `m1n1`, `ANE-main`) kendi orijinal lisanslarına (MIT, Apache vb.) tabidir.*
+
+Daha fazla detay için projedeki [LICENSE](LICENSE) dosyasına veya [CC BY-NC-SA 4.0 resmi sayfasına](https://creativecommons.org/licenses/by-nc-sa/4.0/) göz atabilirsiniz.
