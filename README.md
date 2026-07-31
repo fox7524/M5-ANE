@@ -48,7 +48,7 @@ A native Swift-based GUI daemon providing system orchestration. It initiates har
 This research and development initiative relies heavily on the foundational work provided by the open-source engineering community.
 
 **Lead Architect & Developer:**
-* **Fox (M5 Ultimate / M6-Killer Initiative):** Principal architect of the concurrent ANE/GPU zero-copy tensor splitting concept, JS Hooking infrastructures, and the reverse-engineering methodologies utilized to bypass macOS Library Validation and SIP restrictions. Proper attribution is required for any forks or derivations of this repository.
+* **[fox7524](https://github.com/fox7524) (M5 ANE Ultimate):** Principal architect of the concurrent ANE/GPU zero-copy tensor splitting concept, JS Hooking infrastructures, and the reverse-engineering methodologies utilized to bypass macOS Library Validation and SIP restrictions. Proper attribution is required for any forks or derivations of this repository.
 
 **Foundational Research:**
 * **[maderix](https://github.com/maderix):** Special thanks for the foundational [ANE](https://github.com/maderix/ANE) repository and research, which provided critical technical inspiration and groundwork for the architectural direction of this project.
