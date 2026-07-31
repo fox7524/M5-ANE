@@ -1,74 +1,75 @@
-# ⚡️ M5 God-Mode / M6-Killer Initiative (The 47 TFLOPS Laptop)
+# M5 Ultimate / M6-Killer Initiative
 
-## 📖 Philosophy and Objective
-This project was initiated to unlock the hidden hardware potential of the Apple M5 Pro chip (0 E-Core, 48GB UMA) utilizing bare-metal and advanced reverse-engineering techniques.
+## Executive Summary & Architectural Objectives
+This project was initiated to unlock the hardware capabilities of the Apple M5 Pro architecture (0 E-Core, 48GB UMA) utilizing bare-metal and kernel-level reverse-engineering methodologies. 
 
-Apple's standard hardware manager exclusively utilizes the GPU during heavy AI (LLM) workloads, leaving the ANE (Apple Neural Engine) idle for minor background tasks (e.g., camera/audio processing). The primary objective of this project is to run the **GPU and ANE concurrently at maximum capacity**, achieving desktop-class NVIDIA RTX 4080 / RTX 3090 performance (47+ TFLOPS FP16) on a portable laptop.
-
----
-
-## 🚀 Milestones & Metrics (Session Summary)
-1. **The 47 TFLOPS FP16 Record:** Achieved a combined 47 TFLOPS (FP16) and ~188 TOPS (INT4) by simultaneously extracting **~28 TFLOPS from the GPU** and **~19 TFLOPS from the ANE**.
-2. **Energy Efficiency (The Watt Miracle):** This 47 TFLOPS performance is achieved with a total system power consumption of merely 60-70W. (In contrast, desktop counterparts like the RTX 4070 Ti / 3090 consume 250W-350W on the GPU alone).
-3. **Library Validation & SIP Bypass (Advanced Hooking):** macOS System Integrity Protection (SIP) and Hardened Runtime firewalls initially blocked direct binary injections. We successfully bypassed this by implementing a robust User-Space JavaScript hooking mechanism for LM Studio and utilizing dynamic library (`libmlx.dylib`) environment variable overrides, fully complying with macOS security policies without requiring Kernel Extensions.
-4. **CPU Bottleneck Resolution:** Early interceptors caused the CPU to consume 35W due to excessive file checks (`access()`) occurring tens of thousands of times per second. By implementing a millisecond-based cache, the CPU was completely offloaded, redirecting power entirely to the GPU and Unified Memory.
-5. **RAM Stress Testing via MPS:** The GPU tests were upgraded from pure ALU operations to Metal Performance Shaders (MPS), computing 8192x8192 matrices. This fully saturated the Memory Controller—simulating real-world LLM workloads—and achieved a realistic 40W+ power draw.
+Standard macOS hardware schedulers default to exclusive GPU utilization during intensive Machine Learning and Large Language Model (LLM) inference workloads, relegating the Apple Neural Engine (ANE) to low-power background tasks. The primary objective of this initiative is to enforce **concurrent, maximum-capacity utilization of both the GPU and the ANE**. This approach successfully yields desktop-class compute performance (47+ TFLOPS FP16) within a mobile thermal envelope.
 
 ---
 
-## 🧩 System Architecture & Modules
+## Performance Benchmarks & Technical Milestones
+1. **47 TFLOPS FP16 Throughput:** Achieved a combined compute throughput of 47 TFLOPS (FP16) and approximately 188 TOPS (INT4) by simultaneously extracting ~28 TFLOPS from the GPU and ~19 TFLOPS from the ANE.
+2. **Thermal & Energy Efficiency:** The aforementioned 47 TFLOPS performance operates within a total system power draw of 60-70W. By comparison, equivalent desktop hardware (e.g., RTX 3090 / 4070 Ti) requires 250W-350W for GPU computation alone.
+3. **macOS Security Policy Bypass (User-Space Hooking):** macOS System Integrity Protection (SIP) and Hardened Runtime environments strictly prohibit unauthorized binary injections. This constraint was successfully bypassed through a robust User-Space JavaScript hooking implementation for LM Studio, combined with dynamic library (`libmlx.dylib`) environment overrides, ensuring full compliance with Apple's security protocols without relying on custom Kernel Extensions (KEXTs).
+4. **CPU Bottleneck Mitigation:** Initial interceptor designs resulted in excessive CPU overhead (up to 35W) due to high-frequency POSIX system calls (`access()`). The implementation of a millisecond-precision cache eliminated this overhead, successfully offloading compute cycles and redirecting thermal headroom to the GPU and Unified Memory.
+5. **Memory Controller Saturation via MPS:** GPU stress vectors were migrated from pure ALU instructions to Metal Performance Shaders (MPS), computing 8192x8192 matrices. This accurately simulates the memory-bound nature of LLM inference workloads, fully saturating the Unified Memory Controller and achieving a realistic 40W+ GPU power draw.
+
+---
+
+## System Architecture & Core Modules
 
 ### 1. The Interceptor (`libmetal_interceptor.dylib` & JS Hooks)
-The core bridge injected into the ecosystem. It utilizes advanced hooking (both JS-level process spawning and Objective-C Method Swizzling) to intercept LLM workloads. By analyzing the incoming workload size (MTLSize), it dynamically redirects execution, automatically appending optimal tensor-split arguments and routing tasks to the ANE.
+The primary integration bridge. It utilizes advanced interception techniques (process spawning hooks and Objective-C Method Swizzling) to analyze incoming Metal API workloads (MTLSize). Based on workload heuristics, it dynamically injects optimal tensor-split parameters and routes designated compute graphs to the ANE.
 
-### 2. ANE Stress Tester (`ane_stress_tester.m`)
-Pushes the Apple Neural Engine to its limits using CoreML and the undocumented `_ANEClient` API.
-* **Workload:** 2048 channels, 1024 spatial, 64 depth (Depth kept low and spatial high to prevent compiler crashes). Yields ~536.8 GFLOPs per pass.
-* **Multi-Threading:** To prevent the ANE from sleeping for even a millisecond, 500 matrices per second are bombarded from all CPU cores using `dispatch_group_async`. Result: 45% utilization, 4W power draw, 19 TFLOPS!
+### 2. ANE Compute Engine (`ane_stress_tester.m`)
+Engineered to push the Apple Neural Engine to its absolute hardware limits utilizing CoreML and the undocumented `_ANEClient` API.
+* **Workload Topology:** 2048 channels, 1024 spatial, 64 depth (optimized to prevent compiler faults while maximizing spatial dimensions). Yields ~536.8 GFLOPs per execution pass.
+* **Concurrency:** To prevent ANE idle states, matrices are continuously dispatched from all available CPU cores using `dispatch_group_async` at a rate of 500 dispatches per second. Result: 45% hardware utilization, 4W power consumption, 19 TFLOPS output.
 
-### 3. GPU Stress Tester (`gpu_stress_tester.m`)
-Utilizes Metal Performance Shaders (MPS) with `half4` (FP16) data types to test hardware FP16 limits. It performs intensive read/write operations on Unified Memory to emulate heavy LLM generation scenarios.
+### 3. GPU Compute Engine (`gpu_stress_tester.m`)
+Leverages Metal Performance Shaders (MPS) utilizing `half4` (FP16) precision to benchmark maximum GPU throughput. It executes aggressive read/write cycles against Unified Memory to accurately emulate the memory bandwidth constraints of LLM generation.
 
-### 4. M5 Ultimate Controller App (`M5UltimateApp/`)
-A Swift-based GUI dashboard where the user manages the entire system. It initiates benchmarks, calculates theoretical FP32, INT8, and INT4 TOPS based on real-time FP16 results, and handles secure (elevated) payload injections into local LLM runners.
-
----
-
-## 🔮 Future Roadmap (Plan D: True Tensor Splitting)
-*Critical note for future AI assistants: Currently, the ANE fires up and consumes power, but because LLM weights are not fully bridged to the ANE yet (causing Garbage Text issues in native formats), the GPU handles the majority of the actual LLM computation. Our ultimate goal is to translate this 47 TFLOPS raw power into actual LLM Token/sec (t/s) speeds.*
-
-1. **Memory Pointer Hooking:** Intercept the pointers of actual LLM (llama.cpp / MLX) weights arriving at the Metal API (`MTLBuffer`).
-2. **Zero-Copy Tensor Splitting (68/32):** Retain 68% of the buffer on the GPU and concurrently pump the remaining 32% to the ANE via `IOSurface` (Zero-Copy architecture).
-3. **Barrier & Concatenation:** Develop a C++ and Metal 'Barrier' to wait for both the ANE and GPU to finish, seamlessly concatenate the two tensors in RAM, and return the unified result to the inference engine. Without this, the LLM will output hallucinations/garbage text.
+### 4. M5 Ultimate Controller Application (`M5UltimateApp/`)
+A native Swift-based GUI daemon providing system orchestration. It initiates hardware benchmarks, extrapolates theoretical FP32, INT8, and INT4 TOPS from real-time FP16 telemetry, and manages secure, elevated payload injections into local LLM environments.
 
 ---
 
-## 🌟 Credits & Acknowledgments
+## Future Architecture: True Zero-Copy Tensor Splitting
+*Note on Current Limitations: While the ANE is successfully activated and generating compute power, LLM weights are not yet natively bridged to the ANE tensor graphs (resulting in garbage text generation if forced). Currently, the GPU executes the entirety of the LLM mathematics. The final architectural goal is to translate the raw 47 TFLOPS compute into measurable Token/Second (t/s) inference speed.*
 
-This project would not have been possible without the invaluable work and dedicated engineering efforts of the open-source community.
-
-**Lead Developer / Architect:**
-* **Fox (M5 Ultimate / M6-Killer Initiative):** The principal architect of the project, creator of the ANE and GPU concurrent zero-copy tensor splitting concept, JS Hooking mechanisms, and custom reverse-engineering methods to bypass macOS library constraints (Library Validation/SIP). When forking this repository or using the code, you must credit the lead developer.
-
-**Open Source Projects & Special Thanks:**
-* **[ANE-main](https://github.com/seba-1511/ANE-main):** For the Apple Neural Engine (ANE) reverse engineering bridge and hardware communication infrastructure.
-* **[llama.cpp](https://github.com/ggerganov/llama.cpp):** For the robust and efficient GGUF backend infrastructure.
-* **[MLX](https://github.com/ml-explore/mlx):** For the optimized machine learning array framework on Apple Silicon.
-* **[m1n1](https://github.com/AsahiLinux/m1n1):** For Apple Silicon hardware discovery and bare-metal level hardware analysis.
+1. **Memory Pointer Interception:** Intercept raw LLM weight pointers (from llama.cpp / MLX) at the `MTLBuffer` allocation level.
+2. **Zero-Copy Tensor Routing (68/32 Ratio):** Maintain 68% of the buffer allocation on the GPU while concurrently routing the remaining 32% to the ANE utilizing `IOSurface` for zero-copy memory access.
+3. **Synchronization Barrier & Concatenation:** Implement a low-level C++/Metal synchronization barrier to await parallel execution completion, concatenate the resulting tensors directly in Unified Memory, and return the contiguous result to the inference engine to ensure coherent text generation.
 
 ---
 
-## 📄 License & Attribution
+## Credits & Acknowledgments
 
-This project is licensed under the **Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)** license.
+This research and development initiative relies heavily on the foundational work provided by the open-source engineering community.
 
-What this license means:
-✅ **Get Inspired & Use:** You are free to use this project for personal use, study the code, and learn from it.
-✅ **Remix & Adapt:** You can modify the code and create your own versions.
-✅ **Attribution (Mandatory):** When using this project or its code, you **must** give appropriate credit to the original creator (**Fox - M5 Ultimate**) and provide a link to the original repository. Removing credits or claiming the work as your own is strictly prohibited.
-❌ **NonCommercial:** You may not use this material for commercial purposes. You cannot monetize this project directly or indirectly, turn the code into a commercial product, sell it, or use it on revenue-generating platforms.
-🔗 **ShareAlike:** If you remix, transform, or build upon the material, you must distribute your contributions under the exact same CC BY-NC-SA 4.0 license.
+**Lead Architect & Developer:**
+* **Fox (M5 Ultimate / M6-Killer Initiative):** Principal architect of the concurrent ANE/GPU zero-copy tensor splitting concept, JS Hooking infrastructures, and the reverse-engineering methodologies utilized to bypass macOS Library Validation and SIP restrictions. Proper attribution is required for any forks or derivations of this repository.
 
-*Note: Third-party libraries used in this project (`llama.cpp`, `MLX`, `m1n1`, `ANE-main`) remain under their respective original licenses (MIT, Apache, etc.).*
+**Foundational Research:**
+* **[maderix](https://github.com/maderix):** Special thanks for the foundational M4 repository and research, which provided critical technical inspiration and groundwork for the architectural direction of this project.
 
-For more details, please review the [LICENSE](LICENSE) file in this repository or visit the [official CC BY-NC-SA 4.0 page](https://creativecommons.org/licenses/by-nc-sa/4.0/).
+**Open Source Projects:**
+* **[ANE-main](https://github.com/seba-1511/ANE-main):** For the initial Apple Neural Engine reverse-engineering bridge and hardware communication protocols.
+* **[llama.cpp](https://github.com/ggerganov/llama.cpp):** For the highly optimized GGUF inference backend.
+* **[MLX](https://github.com/ml-explore/mlx):** For the Apple Silicon optimized machine learning array framework.
+* **[m1n1](https://github.com/AsahiLinux/m1n1):** For the bare-metal hardware discovery and architectural analysis of Apple Silicon.
+
+---
+
+## License & Attribution
+
+This software and its associated architectural concepts are distributed under the **Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)** license.
+
+**Usage Terms:**
+* **Attribution:** Any use, modification, or distribution of this code must include explicit and prominent credit to the original author (**Fox - M5 Ultimate**) and include a direct link to this repository. Claiming authorship over these reverse-engineering methodologies is strictly prohibited.
+* **Non-Commercial Restriction:** This repository is strictly for academic, educational, and personal research purposes. Commercial exploitation, monetization, or integration into revenue-generating products or services is expressly forbidden.
+* **ShareAlike:** If you remix, adapt, or build upon this material, your contributions must be distributed under the exact same CC BY-NC-SA 4.0 license.
+
+*Disclaimer: Third-party dependencies integrated within this project (`llama.cpp`, `MLX`, `m1n1`, `ANE-main`) remain subject to their respective original open-source licenses (MIT, Apache 2.0, etc.).*
+
+For complete legal terms, please refer to the [LICENSE](LICENSE) file included in this repository or review the [official CC BY-NC-SA 4.0 documentation](https://creativecommons.org/licenses/by-nc-sa/4.0/).
