@@ -394,13 +394,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         if let button = statusItem.button {
-            let font = NSFont.systemFont(ofSize: 12, weight: .bold)
-            let title = "M5 ⚡️"
+            let font = NSFont.systemFont(ofSize: 13, weight: .bold)
+            let title = "M5"
             let attributes: [NSAttributedString.Key: Any] = [
                 .font: font,
                 .kern: -0.5
             ]
-            button.attributedTitle = NSAttributedString(string: title, attributes: attributes)
+            let attrString = NSAttributedString(string: title, attributes: attributes)
+            button.attributedTitle = attrString
+            
+            // Olabildiğince az margin için genişliği manuel ayarlıyoruz (yazı genişliği + 8px boşluk)
+            statusItem.length = attrString.size().width + 8
         }
         setupMenu()
     }

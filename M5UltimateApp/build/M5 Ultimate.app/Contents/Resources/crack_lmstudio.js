@@ -102,6 +102,7 @@ function injectHook(filePath) {
 function stripHardenedRuntime() {
     console.log("[*] Stripping Hardened Runtime from LM Studio.app...");
     try {
+        cp.execSync(`xattr -cr "${APP_PATH}"`, { stdio: 'inherit' });
         cp.execSync(`codesign --force --deep --sign - "${APP_PATH}"`, { stdio: 'inherit' });
         console.log("[+] Hardened Runtime stripped successfully!");
     } catch (err) {
