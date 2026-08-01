@@ -156,6 +156,10 @@
 		<data>
 		yOQeNzNQEOkjn5UJJmEHF5s3zJA=
 		</data>
+		<key>Resources/payloads/llama/libmetal_interceptor.dylib</key>
+		<data>
+		+92JFSIC6mFhP7WiCACRznWvgwE=
+		</data>
 		<key>Resources/payloads/llama/libmtmd.0.0.1.dylib</key>
 		<data>
 		sS7Cnxh9+XQj5QkfpSfC+Q+x5lI=
@@ -178,11 +182,15 @@
 		</data>
 		<key>Resources/payloads/llama/llama-server.ane</key>
 		<data>
-		syg5NPTZY5405rxRsc0wCxxEi/A=
+		wTleQIQwSOFGz/lZy4q74UZBuCk=
+		</data>
+		<key>Resources/payloads/mlx/libmetal_interceptor.dylib</key>
+		<data>
+		+92JFSIC6mFhP7WiCACRznWvgwE=
 		</data>
 		<key>Resources/payloads/mlx/libmlx.dylib</key>
 		<data>
-		spqfBUQ99z6S+3KL4V0CRpYNc6A=
+		AHLaq0SBEUisPk516rhCTb4Ueq8=
 		</data>
 		<key>Resources/payloads/mlx/mlx.metallib</key>
 		<data>
@@ -461,6 +469,13 @@
 			X1/fflDRScBnDgLxdhQr0KNrIvzA+ypcHsVca3MCZXg=
 			</data>
 		</dict>
+		<key>Resources/payloads/llama/libmetal_interceptor.dylib</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			aG6w9Jnc+Kksa63U3OBTsOR139AzMOJj3Ml11m0BE84=
+			</data>
+		</dict>
 		<key>Resources/payloads/llama/libmtmd.0.0.1.dylib</key>
 		<dict>
 			<key>hash2</key>
@@ -500,14 +515,21 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			pZw0DqeadODIQ1rtb1wPap1Keh9ksqV5Y90W13C25Sg=
+			hI9HxTBIKMdn2BKeqEXHjhqORZ5WtmSXsaFwnIFTl6I=
+			</data>
+		</dict>
+		<key>Resources/payloads/mlx/libmetal_interceptor.dylib</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			aG6w9Jnc+Kksa63U3OBTsOR139AzMOJj3Ml11m0BE84=
 			</data>
 		</dict>
 		<key>Resources/payloads/mlx/libmlx.dylib</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			qb0KAJRVn6CyuOLKAdreGzlPoTAoRvcGpauPPDciMD4=
+			iKkyyJdO80QFG3HcNvD1XLtvxZ+MGw+aImrbzd/9thQ=
 			</data>
 		</dict>
 		<key>Resources/payloads/mlx/mlx.metallib</key>

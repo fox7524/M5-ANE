@@ -40,9 +40,24 @@ cp -f ../llama.cpp/ggml/src/ggml-metal/ggml-metal.metal "$APP_DIR/Contents/Resou
 cp -f ../mlx/python/mlx/lib/mlx.metallib "$APP_DIR/Contents/Resources/payloads/mlx/" 2>/dev/null || true
 cp -f ../mlx/python/mlx/lib/libmlx.dylib "$APP_DIR/Contents/Resources/payloads/mlx/" 2>/dev/null || true
 
+# Inject libmetal_interceptor into llama-server.ane and libmlx.dylib
+cp ../payloads/libmetal_interceptor.dylib "$APP_DIR/Contents/Resources/payloads/llama/" 2>/dev/null || true
+cp ../payloads/libmetal_interceptor.dylib "$APP_DIR/Contents/Resources/payloads/mlx/" 2>/dev/null || true
+cp ../payloads/insert_dylib "$RESOURCES_DIR/" 2>/dev/null || true
+chmod +x "$RESOURCES_DIR/insert_dylib"
+
+if [ -f "$APP_DIR/Contents/Resources/payloads/llama/llama-server.ane" ]; then
+    "$RESOURCES_DIR/insert_dylib" --all-yes "@executable_path/libmetal_interceptor.dylib" "$APP_DIR/Contents/Resources/payloads/llama/llama-server.ane"
+    mv "$APP_DIR/Contents/Resources/payloads/llama/llama-server.ane_patched" "$APP_DIR/Contents/Resources/payloads/llama/llama-server.ane"
+fi
+
+if [ -f "$APP_DIR/Contents/Resources/payloads/mlx/libmlx.dylib" ]; then
+    "$RESOURCES_DIR/insert_dylib" --all-yes "@loader_path/libmetal_interceptor.dylib" "$APP_DIR/Contents/Resources/payloads/mlx/libmlx.dylib"
+    mv "$APP_DIR/Contents/Resources/payloads/mlx/libmlx.dylib_patched" "$APP_DIR/Contents/Resources/payloads/mlx/libmlx.dylib"
+fi
+
 # Copy injection script
 cp -f crack_lmstudio.js "$APP_DIR/Contents/Resources/"
-cp ../payloads/insert_dylib "$RESOURCES_DIR/" 2>/dev/null || true
 cp ../payloads/gpu_stress_tester "$RESOURCES_DIR/" 2>/dev/null || true
 cp ../payloads/ane_stress_tester "$RESOURCES_DIR/" 2>/dev/null || true
 cp ../payloads/libmetal_interceptor.dylib "$RESOURCES_DIR/" 2>/dev/null || true
@@ -89,6 +104,7 @@ swiftc App.swift ContentView.swift BackendManager.swift \
     -o "$MACOS_DIR/$APP_NAME"
 
 echo "[*] Signing the App Bundle with entitlements..."
+xattr -cr "$APP_DIR"
 codesign --force --deep --sign - --entitlements build/m5_ents.xml "$APP_DIR"
 
 echo "[+] Build Complete: $APP_DIR"
