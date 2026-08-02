@@ -394,17 +394,27 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         if let button = statusItem.button {
-            let font = NSFont.systemFont(ofSize: 13, weight: .bold)
             let title = "M5"
+            let font = NSFont.systemFont(ofSize: 13, weight: .bold)
             let attributes: [NSAttributedString.Key: Any] = [
                 .font: font,
                 .kern: -0.5
             ]
             let attrString = NSAttributedString(string: title, attributes: attributes)
-            button.attributedTitle = attrString
             
-            // Olabildiğince az margin için genişliği manuel ayarlıyoruz (yazı genişliği + 8px boşluk)
-            statusItem.length = attrString.size().width + 8
+            // Metni resme dönüştürerek macOS'in standart metin padding'ini tamamen siliyoruz
+            let textSize = attrString.size()
+            let image = NSImage(size: NSSize(width: textSize.width, height: 18))
+            image.lockFocus()
+            attrString.draw(at: NSPoint(x: 0, y: (18 - textSize.height) / 2.0))
+            image.unlockFocus()
+            image.isTemplate = true // Dark/Light moda uyum sağlar
+            
+            button.image = image
+            button.imagePosition = .imageOnly
+            
+            // Genişliği tam olarak metnin resim boyutu kadar ayarlıyoruz (sıfır margin)
+            statusItem.length = textSize.width + 4
         }
         setupMenu()
     }
