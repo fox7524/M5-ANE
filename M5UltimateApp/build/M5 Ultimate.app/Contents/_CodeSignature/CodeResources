@@ -30,7 +30,7 @@
 		</data>
 		<key>Resources/libmetal_interceptor.dylib</key>
 		<data>
-		+92JFSIC6mFhP7WiCACRznWvgwE=
+		S8RUudrGkdaROTOP4jMn70+bNyw=
 		</data>
 		<key>Resources/patch_ollama.sh</key>
 		<data>
@@ -158,7 +158,7 @@
 		</data>
 		<key>Resources/payloads/llama/libmetal_interceptor.dylib</key>
 		<data>
-		+92JFSIC6mFhP7WiCACRznWvgwE=
+		S8RUudrGkdaROTOP4jMn70+bNyw=
 		</data>
 		<key>Resources/payloads/llama/libmtmd.0.0.1.dylib</key>
 		<data>
@@ -186,7 +186,7 @@
 		</data>
 		<key>Resources/payloads/mlx/libmetal_interceptor.dylib</key>
 		<data>
-		+92JFSIC6mFhP7WiCACRznWvgwE=
+		S8RUudrGkdaROTOP4jMn70+bNyw=
 		</data>
 		<key>Resources/payloads/mlx/libmlx.dylib</key>
 		<data>
@@ -249,7 +249,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			aG6w9Jnc+Kksa63U3OBTsOR139AzMOJj3Ml11m0BE84=
+			JJiq0xZVtjkz22mCee811wVC3m/UIn9wEEVXJ2IrBZs=
 			</data>
 		</dict>
 		<key>Resources/patch_ollama.sh</key>
@@ -473,7 +473,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			aG6w9Jnc+Kksa63U3OBTsOR139AzMOJj3Ml11m0BE84=
+			JJiq0xZVtjkz22mCee811wVC3m/UIn9wEEVXJ2IrBZs=
 			</data>
 		</dict>
 		<key>Resources/payloads/llama/libmtmd.0.0.1.dylib</key>
@@ -522,7 +522,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			aG6w9Jnc+Kksa63U3OBTsOR139AzMOJj3Ml11m0BE84=
+			JJiq0xZVtjkz22mCee811wVC3m/UIn9wEEVXJ2IrBZs=
 			</data>
 		</dict>
 		<key>Resources/payloads/mlx/libmlx.dylib</key>

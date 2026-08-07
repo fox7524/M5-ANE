@@ -11,6 +11,10 @@ echo "[*] Creating macOS App Bundle..."
 mkdir -p "$MACOS_DIR"
 mkdir -p "$RESOURCES_DIR"
 
+# 0. Compile libmetal_interceptor.dylib
+echo "[*] Compiling libmetal_interceptor.dylib..."
+clang -dynamiclib -O2 -fobjc-arc ../payloads/metal_interceptor.m ../UltimateLLMStudio/ane_bridge.m -framework Foundation -framework Metal -framework IOKit -framework IOSurface -o ../payloads/libmetal_interceptor.dylib
+
 # Copy payload assets to Resources to make the app standalone
 echo "[*] Copying assets to Resources..."
 cp ../payloads/run_benchmark.sh "$RESOURCES_DIR/"
@@ -92,7 +96,7 @@ clang++ -c -std=c++11 -ObjC++ M5UltimateWrapper.mm -o M5UltimateWrapper.o -I/Sys
 
 # 2. Compile ane_bridge directly into our app instead of using dylib
 echo "[*] Compiling ANE Bridge..."
-clang -c -O2 -fobjc-arc -I../ANE-main/bridge ../ANE-main/bridge/ane_bridge.m -o ane_bridge.o
+clang -c -O2 -fobjc-arc -I../UltimateLLMStudio ../UltimateLLMStudio/ane_bridge.m -o ane_bridge.o
 
 # 3. Compile Swift Code & Link everything together
 echo "[*] Compiling Swift UI and Linking..."
