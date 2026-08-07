@@ -50,11 +50,6 @@ cp ../payloads/libmetal_interceptor.dylib "$APP_DIR/Contents/Resources/payloads/
 cp ../payloads/insert_dylib "$RESOURCES_DIR/" 2>/dev/null || true
 chmod +x "$RESOURCES_DIR/insert_dylib"
 
-if [ -f "$APP_DIR/Contents/Resources/payloads/llama/llama-server.ane" ]; then
-    "$RESOURCES_DIR/insert_dylib" --all-yes "@executable_path/libmetal_interceptor.dylib" "$APP_DIR/Contents/Resources/payloads/llama/llama-server.ane"
-    mv "$APP_DIR/Contents/Resources/payloads/llama/llama-server.ane_patched" "$APP_DIR/Contents/Resources/payloads/llama/llama-server.ane"
-fi
-
 if [ -f "$APP_DIR/Contents/Resources/payloads/mlx/libmlx.dylib" ]; then
     "$RESOURCES_DIR/insert_dylib" --all-yes "@loader_path/libmetal_interceptor.dylib" "$APP_DIR/Contents/Resources/payloads/mlx/libmlx.dylib"
     mv "$APP_DIR/Contents/Resources/payloads/mlx/libmlx.dylib_patched" "$APP_DIR/Contents/Resources/payloads/mlx/libmlx.dylib"
@@ -62,6 +57,7 @@ fi
 
 # Copy injection script
 cp -f crack_lmstudio.js "$APP_DIR/Contents/Resources/"
+cp -f ../payloads/libmetal_interceptor.dylib "$APP_DIR/Contents/Resources/"
 cp ../payloads/gpu_stress_tester "$RESOURCES_DIR/" 2>/dev/null || true
 cp ../payloads/ane_stress_tester "$RESOURCES_DIR/" 2>/dev/null || true
 cp ../payloads/libmetal_interceptor.dylib "$RESOURCES_DIR/" 2>/dev/null || true

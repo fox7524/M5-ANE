@@ -174,7 +174,7 @@ struct DashboardView: View {
     func checkInjectionStatus() {
         let fileManager = FileManager.default
         let homeDir = NSHomeDirectory()
-        let aneServer = homeDir + "/.cache/lm-studio/bin/llama-server.ane"
+        let aneServer = homeDir + "/.cache/lm-studio/bin/lms.ane"
         
         let isGGUFInjected = fileManager.fileExists(atPath: aneServer)
         
@@ -398,7 +398,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             let font = NSFont.systemFont(ofSize: 13, weight: .bold)
             let attributes: [NSAttributedString.Key: Any] = [
                 .font: font,
-                .kern: -0.5
+                .kern: -0.5,
+                .foregroundColor: NSColor.black
             ]
             let attrString = NSAttributedString(string: title, attributes: attributes)
             
@@ -406,6 +407,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             let textSize = attrString.size()
             let image = NSImage(size: NSSize(width: textSize.width, height: 18))
             image.lockFocus()
+            NSColor.clear.set()
+            NSRect(x: 0, y: 0, width: textSize.width, height: 18).fill()
             attrString.draw(at: NSPoint(x: 0, y: (18 - textSize.height) / 2.0))
             image.unlockFocus()
             image.isTemplate = true // Dark/Light moda uyum sağlar
@@ -414,7 +417,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             button.imagePosition = .imageOnly
             
             // Genişliği tam olarak metnin resim boyutu kadar ayarlıyoruz (sıfır margin)
-            statusItem.length = textSize.width + 4
+            statusItem.length = textSize.width + 6
         }
         setupMenu()
     }
