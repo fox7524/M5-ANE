@@ -394,30 +394,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         if let button = statusItem.button {
-            let title = "M5"
-            let font = NSFont.systemFont(ofSize: 13, weight: .bold)
-            let attributes: [NSAttributedString.Key: Any] = [
-                .font: font,
-                .kern: -0.5,
-                .foregroundColor: NSColor.black
-            ]
-            let attrString = NSAttributedString(string: title, attributes: attributes)
+            // Apple'ın resmi SF Symbols ikonlarından en havalı ve sade olanını seçelim
+            // Çip / işlemci ikonu (Sıfır margin problemi çıkarmaz, her zaman render edilir)
+            button.image = NSImage(systemSymbolName: "cpu", accessibilityDescription: "M5 Ultimate")
             
-            // Metni resme dönüştürerek macOS'in standart metin padding'ini tamamen siliyoruz
-            let textSize = attrString.size()
-            let image = NSImage(size: NSSize(width: textSize.width, height: 18))
-            image.lockFocus()
-            NSColor.clear.set()
-            NSRect(x: 0, y: 0, width: textSize.width, height: 18).fill()
-            attrString.draw(at: NSPoint(x: 0, y: (18 - textSize.height) / 2.0))
-            image.unlockFocus()
-            image.isTemplate = true // Dark/Light moda uyum sağlar
+            // Eğer istersen harf de koyabiliriz ama sistem sembolü kesin çalışır:
+            // button.image = NSImage(systemSymbolName: "m.square.fill", accessibilityDescription: "M5 Ultimate")
             
-            button.image = image
             button.imagePosition = .imageOnly
             
-            // Genişliği tam olarak metnin resim boyutu kadar ayarlıyoruz (sıfır margin)
-            statusItem.length = textSize.width + 6
+            // Genişliği sabitle (Sadece ikon genişliği)
+            statusItem.length = 24
         }
         setupMenu()
     }
