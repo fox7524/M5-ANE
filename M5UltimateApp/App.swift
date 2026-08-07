@@ -394,17 +394,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         if let button = statusItem.button {
-            // Apple'ın resmi SF Symbols ikonlarından en havalı ve sade olanını seçelim
-            // Çip / işlemci ikonu (Sıfır margin problemi çıkarmaz, her zaman render edilir)
-            button.image = NSImage(systemSymbolName: "cpu", accessibilityDescription: "M5 Ultimate")
-            
-            // Eğer istersen harf de koyabiliriz ama sistem sembolü kesin çalışır:
-            // button.image = NSImage(systemSymbolName: "m.square.fill", accessibilityDescription: "M5 Ultimate")
-            
+            // macOS 11+ için en güvenilir SF Symbol ikon kullanımı
+            let config = NSImage.SymbolConfiguration(scale: .large)
+            if let image = NSImage(systemSymbolName: "cpu", accessibilityDescription: "M5 Ultimate") {
+                button.image = image.withSymbolConfiguration(config)
+            } else {
+                button.title = "M5" // İkon yüklenemezse fallback olarak metin kalsın
+            }
             button.imagePosition = .imageOnly
-            
-            // Genişliği sabitle (Sadece ikon genişliği)
-            statusItem.length = 24
         }
         setupMenu()
     }
