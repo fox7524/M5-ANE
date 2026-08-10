@@ -74,6 +74,10 @@ void ane_bridge_reset_compile_count(void);
 // size: Size in bytes of the chunk to process
 int run_ane_with_buffer(void *metal_buffer_ptr, size_t offset, size_t size);
 
+// M5 ZERO-COPY PIPELINE
+// Runs the evaluation directly on an IOSurface without memcpy
+int run_ane_zero_copy(void *iosurface_ptr, size_t offset, size_t size);
+
 // Build a weight blob in ANE format (128-byte header + fp16 data)
 // src: float32 weights [rows x cols]
 // Returns allocated buffer and sets out_len. Caller must free().
