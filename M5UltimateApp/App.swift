@@ -43,9 +43,6 @@ struct DashboardView: View {
     @State private var showHelp = false
     @AppStorage("isInjected") private var isInjected = false
     
-    // Phase 1: Dynamic Split Slider
-    @State private var gpuSplitRatio: Double = 68.0
-    
     @State private var timer: Timer? = nil
 
     var body: some View {
@@ -96,33 +93,10 @@ struct DashboardView: View {
             
             // Gauges
             HStack(spacing: 40) {
-                GaugeView(title: "GPU Load (\(Int(gpuSplitRatio))%)", value: gpuLoad, color: .blue)
-                GaugeView(title: "ANE Load (\(Int(100 - gpuSplitRatio))%)", value: aneLoad, color: .purple)
+                GaugeView(title: "GPU Load (68%)", value: gpuLoad, color: .blue)
+                GaugeView(title: "ANE Load (32%)", value: aneLoad, color: .purple)
             }
             .padding(.vertical, 10)
-            
-            // Dynamic Split Slider
-            VStack(spacing: 5) {
-                HStack {
-                    Text("GPU: \(Int(gpuSplitRatio))%")
-                        .font(.caption.bold())
-                        .foregroundColor(.blue)
-                    Spacer()
-                    Text("Tensor Split Ratio")
-                        .font(.caption)
-                        .foregroundColor(.gray)
-                    Spacer()
-                    Text("ANE: \(Int(100 - gpuSplitRatio))%")
-                        .font(.caption.bold())
-                        .foregroundColor(.purple)
-                }
-                Slider(value: $gpuSplitRatio, in: 0...100, step: 1.0)
-                    .accentColor(.purple)
-                    .onChange(of: gpuSplitRatio) { newValue in
-                        updateSplitRatio(newValue)
-                    }
-            }
-            .padding(.horizontal, 30)
             
             // Stats Grid
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 15) {
@@ -200,16 +174,9 @@ struct DashboardView: View {
     func checkInjectionStatus() {
         let fileManager = FileManager.default
         let homeDir = NSHomeDirectory()
-        let aneServer = homeDir + "/.cache/lm-studio/bin/lms.ane"
+        let aneServer = homeDir + "/.cache/lm-studio/bin/llama-server.ane"
         
         let isGGUFInjected = fileManager.fileExists(atPath: aneServer)
-        
-        // Initialize split ratio from file if exists
-        if let ratioStr = try? String(contentsOfFile: "/tmp/m5_split_ratio", encoding: .utf8), let ratio = Double(ratioStr.trimmingCharacters(in: .whitespacesAndNewlines)) {
-            self.gpuSplitRatio = ratio * 100.0
-        } else {
-            updateSplitRatio(68.0) // Default
-        }
         
         // If GGUF is injected, consider the system injected.
         let status = isGGUFInjected
@@ -220,46 +187,13 @@ struct DashboardView: View {
         }
     }
     
-    func updateSplitRatio(_ percentage: Double) {
-        let ratio = percentage / 100.0
-        let ratioStr = String(format: "%.2f", ratio)
-        do {
-            try ratioStr.write(toFile: "/tmp/m5_split_ratio", atomically: true, encoding: .utf8)
-        } catch {
-            print("Failed to write split ratio: \(error)")
-        }
-    }
-    
     func startGauges() {
         gpuLoad = 0.0
         aneLoad = 0.0
         timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { _ in
-            // Read from Live Tensor Visualizer
-            if let stats = try? String(contentsOfFile: "/tmp/m5_tensor_stats", encoding: .utf8) {
-                let parts = stats.trimmingCharacters(in: .whitespacesAndNewlines).components(separatedBy: ",")
-                if parts.count == 2, let gpuBytes = Double(parts[0]), let aneBytes = Double(parts[1]) {
-                    let totalBytes = gpuBytes + aneBytes
-                    if totalBytes > 0 {
-                        // Normalize to a percentage load roughly based on memory traffic
-                        let calculatedGpuLoad = min(1.0, (gpuBytes / 100_000_000.0) + 0.1) // Fake normalization for visual
-                        let calculatedAneLoad = min(1.0, (aneBytes / 50_000_000.0) + 0.1)
-                        
-                        withAnimation(.linear(duration: 0.1)) {
-                            self.gpuLoad = calculatedGpuLoad
-                            self.aneLoad = calculatedAneLoad
-                        }
-                    } else {
-                        withAnimation(.linear(duration: 0.1)) {
-                            self.gpuLoad = self.isRunning ? Double.random(in: 0.85...1.0) : 0.0
-                            self.aneLoad = self.isRunning ? Double.random(in: 0.80...0.95) : 0.0
-                        }
-                    }
-                }
-            } else {
-                withAnimation(.linear(duration: 0.1)) {
-                    self.gpuLoad = self.isRunning ? Double.random(in: 0.85...1.0) : 0.0
-                    self.aneLoad = self.isRunning ? Double.random(in: 0.80...0.95) : 0.0
-                }
+            withAnimation(.linear(duration: 0.1)) {
+                self.gpuLoad = Double.random(in: 0.85...1.0)
+                self.aneLoad = Double.random(in: 0.80...0.95)
             }
         }
     }
@@ -460,13 +394,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         if let button = statusItem.button {
-            let font = NSFont.systemFont(ofSize: 12, weight: .bold)
-            let title = "M5 ⚡️"
+            let font = NSFont.systemFont(ofSize: 13, weight: .bold)
+            let title = "M5"
             let attributes: [NSAttributedString.Key: Any] = [
                 .font: font,
                 .kern: -0.5
             ]
-            button.attributedTitle = NSAttributedString(string: title, attributes: attributes)
+            let attrString = NSAttributedString(string: title, attributes: attributes)
+            button.attributedTitle = attrString
+            
+            // Olabildiğince az margin için genişliği manuel ayarlıyoruz (yazı genişliği + 8px boşluk)
+            statusItem.length = attrString.size().width + 8
         }
         setupMenu()
     }
