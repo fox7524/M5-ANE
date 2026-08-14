@@ -4,8 +4,18 @@ const cp = require('child_process');
 
 console.log("=== M5 Ultimate Core Cracker ===");
 
+const FALLBACK_ENTS = `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>com.apple.security.cs.allow-dyld-environment-variables</key><true/>
+    <key>com.apple.security.cs.allow-jit</key><true/>
+    <key>com.apple.security.cs.allow-unsigned-executable-memory</key><true/>
+    <key>com.apple.security.device.audio-input</key><true/>
+</dict>
+</plist>`;
+
 function removeOldAppHooks() {
-    // Remove old index.js and llmworker.js hooks if they exist, since we don't need them anymore!
     console.log("[*] Cleaning up old application hooks (if any)...");
     const APP_PATH = '/Applications/LM Studio.app';
     const MAIN_JS = path.join(APP_PATH, 'Contents/Resources/app/.webpack/main/index.js');
@@ -18,8 +28,6 @@ function removeOldAppHooks() {
             if (content.includes('M5_HOOK_ACTIVE')) {
                 const regex = /\/\/ --- M5 ULTIMATE HOOK START ---[\s\S]*?\/\/ --- M5 ULTIMATE HOOK END ---\s*/;
                 content = content.replace(regex, '');
-                
-                // write back
                 const tmpPath = '/tmp/m5_tmp_' + path.basename(filePath);
                 fs.writeFileSync(tmpPath, content, 'utf8');
                 cp.execSync(`rm -f "${filePath}"`);
@@ -33,96 +41,91 @@ function removeOldAppHooks() {
     });
 }
 
-function deployPayloads() {
-    console.log("[*] Deploying M5 Ultimate Payloads...");
-    const userHome = process.env.REAL_HOME || process.env.HOME || process.env.USERPROFILE;
-    
-    // GGUF Payload - Dynamic Injection for lms
-    const llamaDir = path.join(userHome, '.cache/lm-studio/bin');
-    if (!fs.existsSync(llamaDir)) fs.mkdirSync(llamaDir, { recursive: true });
-    
-    // Copy interceptor
-    const srcInterceptor = path.join(__dirname, 'libmetal_interceptor.dylib');
-    if (fs.existsSync(srcInterceptor)) {
-        fs.copyFileSync(srcInterceptor, path.join(llamaDir, 'libmetal_interceptor.dylib'));
-    } else {
-        // Fallback for when running from source
-        const altInterceptor = path.join(__dirname, '../payloads/libmetal_interceptor.dylib');
-        if (fs.existsSync(altInterceptor)) {
-            fs.copyFileSync(altInterceptor, path.join(llamaDir, 'libmetal_interceptor.dylib'));
-        }
-    }
-    
-    // Copy insert_dylib
-    const srcInsertDylib = path.join(__dirname, 'insert_dylib');
-    const destInsertDylib = path.join(llamaDir, 'insert_dylib');
-    if (fs.existsSync(srcInsertDylib)) {
-        fs.copyFileSync(srcInsertDylib, destInsertDylib);
-        cp.execSync(`chmod +x "${destInsertDylib}"`);
-    }
-
-    // Dynamic Injection of lms
-    const lmsBinary = path.join(llamaDir, 'lms');
-    const lmsOrig = path.join(llamaDir, 'lms.orig');
-    const lmsAne = path.join(llamaDir, 'lms.ane');
-    
-    if (fs.existsSync(lmsBinary)) {
-        const content = fs.readFileSync(lmsBinary, 'utf8');
-        if (!content.startsWith('#!/bin/bash')) {
-            // It's the real binary, rename it
-            fs.renameSync(lmsBinary, lmsOrig);
-            console.log("[+] Renamed original lms to lms.orig");
-        }
-    }
-    
-    if (fs.existsSync(lmsOrig) && fs.existsSync(destInsertDylib)) {
-        console.log("[*] Injecting libmetal_interceptor.dylib into lms.orig...");
-        try {
-            cp.execSync(`"${destInsertDylib}" --all-yes "@executable_path/libmetal_interceptor.dylib" "${lmsOrig}" "${lmsAne}"`, { stdio: 'pipe' });
-            cp.execSync(`xattr -cr "${lmsAne}" 2>/dev/null || true`);
-            cp.execSync(`codesign --force --sign - "${lmsAne}" 2>/dev/null || true`);
-            console.log("[+] Successfully created injected lms.ane");
-        } catch (e) {
-            console.error("[-] Failed to inject lms:", e.message);
-        }
-    }
-    
-    // MLX Payload
-    const mlxDir = path.join(userHome, '.lmstudio/extensions/m5_mlx');
-    if (!fs.existsSync(mlxDir)) fs.mkdirSync(mlxDir, { recursive: true });
-    
-    const mlxPayloads = path.join(__dirname, 'payloads/mlx');
-    if (fs.existsSync(mlxPayloads)) {
-        fs.readdirSync(mlxPayloads).forEach(file => {
-            if (file.endsWith('.dylib') || file.endsWith('.metallib')) {
-                const targetPath = path.join(mlxDir, file);
-                fs.copyFileSync(path.join(mlxPayloads, file), targetPath);
-                if (file.endsWith('.dylib')) {
-                    try {
-                        cp.execSync(`xattr -cr "${targetPath}" 2>/dev/null || true`);
-                        cp.execSync(`codesign --force --sign - "${targetPath}" 2>/dev/null || true`);
-                    } catch(e) {}
-                }
+function extractEntitlements(binPath, outXmlPath) {
+    try {
+        const out = cp.execSync(`codesign -d --entitlements :- "${binPath}" 2>/dev/null || true`).toString().trim();
+        if (out && out.includes('<?xml')) {
+            let xml = out.substring(out.indexOf('<?xml'));
+            if (!xml.includes('com.apple.security.cs.disable-library-validation')) {
+                xml = xml.replace('</dict>', '    <key>com.apple.security.cs.disable-library-validation</key><true/>\n</dict>');
             }
-        });
-        console.log("[+] Deployed MLX payloads (libmlx.dylib & metallib)");
-    }
+            fs.writeFileSync(outXmlPath, xml);
+            return true;
+        }
+    } catch (e) {}
+    
+    // Fallback
+    let fallback = FALLBACK_ENTS;
+    fallback = fallback.replace('</dict>', '    <key>com.apple.security.cs.disable-library-validation</key><true/>\n</dict>');
+    fs.writeFileSync(outXmlPath, fallback);
+    return false;
 }
 
-function installWrappers() {
-    console.log("[*] Installing Bash Wrappers for LM Studio executables...");
-    const userHome = process.env.REAL_HOME || process.env.HOME || process.env.USERPROFILE;
+function processBinary(targetBin, isLlama) {
+    const dir = path.dirname(targetBin);
+    const base = path.basename(targetBin);
+    const origBin = path.join(dir, base + '.orig');
+    const patchedBin = path.join(dir, base + '.patched');
+    const entsXml = path.join(dir, base + '_ents.xml');
     
-    // 1. GGUF lms wrapper
-    const llamaDir = path.join(userHome, '.cache/lm-studio/bin');
-    if (fs.existsSync(llamaDir)) {
-        const lmsServer = path.join(llamaDir, 'lms');
-        const lmsAne = path.join(llamaDir, 'lms.ane');
-        
-        if (fs.existsSync(lmsAne)) {
-            // Create wrapper script
-            const wrapperContent = `#!/bin/bash
-# M5 Ultimate Wrapper for lms
+    // 1. Ensure we have the real binary in .orig
+    if (fs.existsSync(targetBin)) {
+        const content = fs.readFileSync(targetBin, 'utf8');
+        if (content.startsWith('#!/bin/bash')) {
+            if (!fs.existsSync(origBin)) {
+                console.error(`[!] Wrapper found but no .orig for ${targetBin}! User might need to reinstall backend.`);
+                return;
+            }
+        } else {
+            // It's the real binary. Move it to .orig
+            if (fs.existsSync(origBin)) fs.unlinkSync(origBin);
+            fs.renameSync(targetBin, origBin);
+        }
+    } else if (!fs.existsSync(origBin)) {
+        return; // Nothing to do
+    }
+    
+    // 2. Extract entitlements from .orig
+    extractEntitlements(origBin, entsXml);
+    
+    // 3. Copy interceptor and insert_dylib to the directory
+    const srcInterceptor = path.join(__dirname, 'libmetal_interceptor.dylib') || path.join(__dirname, '../payloads/libmetal_interceptor.dylib');
+    const destInterceptor = path.join(dir, 'libmetal_interceptor.dylib');
+    if (fs.existsSync(srcInterceptor)) {
+        fs.copyFileSync(srcInterceptor, destInterceptor);
+    }
+    
+    const insertDylib = path.join(__dirname, 'insert_dylib');
+    if (!fs.existsSync(insertDylib)) {
+        const altPath = path.join(__dirname, 'build/M5 Ultimate.app/Contents/Resources/insert_dylib');
+        if (fs.existsSync(altPath)) {
+            cp.execSync(`cp "${altPath}" "${insertDylib}"`);
+        }
+    }
+    
+    // 4. Inject
+    console.log(`[*] Injecting into ${base}...`);
+    try {
+        if (fs.existsSync(patchedBin)) fs.unlinkSync(patchedBin);
+        cp.execSync(`"${insertDylib}" --all-yes "@executable_path/libmetal_interceptor.dylib" "${origBin}" "${patchedBin}"`, { stdio: 'pipe' });
+    } catch(e) {
+        console.error(`[-] Failed to inject ${base}`);
+        return;
+    }
+    
+    // 5. Sign patched binary
+    try {
+        cp.execSync(`xattr -cr "${patchedBin}" 2>/dev/null || true`);
+        cp.execSync(`codesign --force --options runtime --sign - --entitlements "${entsXml}" "${patchedBin}"`, { stdio: 'pipe' });
+        console.log(`[+] Signed ${base}.patched with Library Validation disabled`);
+    } catch(e) {
+        console.error(`[-] Failed to sign ${base}.patched`);
+    }
+    
+    // 6. Write bash wrapper
+    let wrapperContent = '';
+    if (isLlama) {
+        wrapperContent = `#!/bin/bash
 args=("$@")
 has_ts=0
 for arg in "\${args[@]}"; do
@@ -131,152 +134,127 @@ for arg in "\${args[@]}"; do
         break
     fi
 done
-
 if [[ $has_ts -eq 0 ]]; then
     args+=("--tensor-split" "18,20")
 fi
-
-echo "[M5 Ultimate] Launching ANE injected lms with args: \${args[*]}" >> /tmp/m5_proxy.log
-
-# Execute the injected binary
-exec "$(dirname "$0")/lms.ane" "\${args[@]}"
+exec "$(dirname "$0")/${base}.patched" "\${args[@]}"
 `;
-            fs.writeFileSync(lmsServer, wrapperContent, { mode: 0o755 });
-            console.log("[+] Installed lms wrapper.");
+    } else {
+        wrapperContent = `#!/bin/bash
+exec "$(dirname "$0")/${base}.patched" "$@"
+`;
+    }
+    
+    fs.writeFileSync(targetBin, wrapperContent, { mode: 0o755 });
+    console.log(`[+] Installed wrapper for ${base}`);
+}
+
+function deployPayloads() {
+    console.log("[*] Finding backends and injecting payloads...");
+    const userHome = process.env.REAL_HOME || process.env.HOME || process.env.USERPROFILE;
+    
+    // Process llama-server
+    const llamaBackends = path.join(userHome, '.cache/lm-studio/extensions/backends');
+    if (fs.existsSync(llamaBackends)) {
+        const dirs = fs.readdirSync(llamaBackends);
+        for (const d of dirs) {
+            const llamaServer = path.join(llamaBackends, d, 'llama-server');
+            if (fs.existsSync(llamaServer) || fs.existsSync(llamaServer + '.orig')) {
+                processBinary(llamaServer, true);
+            }
         }
     }
     
-    // 2. MLX python wrapper
-    const entsPath = '/tmp/m5_ents.xml';
-    fs.writeFileSync(entsPath, `<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>com.apple.security.cs.disable-library-validation</key>
-    <true/>
-    <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
-    <true/>
-    <key>com.apple.security.cs.allow-dyld-environment-variables</key>
-    <true/>
-</dict>
-</plist>`);
-
-    const backendsDir = path.join(userHome, '.lmstudio/extensions/backends');
-    if (fs.existsSync(backendsDir)) {
+    // Process Python
+    const mlxBackends = path.join(userHome, '.lmstudio/extensions/backends');
+    if (fs.existsSync(mlxBackends)) {
         function findPythons(dir, fileList = []) {
-            const files = fs.readdirSync(dir);
-            for (const file of files) {
-                const fullPath = path.join(dir, file);
-                if (fs.statSync(fullPath).isDirectory()) {
-                    findPythons(fullPath, fileList);
-                } else if (file === 'python3.11' || file === 'python3.11.orig') {
-                    fileList.push(fullPath);
+            try {
+                const files = fs.readdirSync(dir);
+                for (const file of files) {
+                    if (file.startsWith('.tmp')) continue;
+                    const fullPath = path.join(dir, file);
+                    try {
+                        const stat = fs.statSync(fullPath);
+                        if (stat.isDirectory()) {
+                            findPythons(fullPath, fileList);
+                        } else if (file === 'python3.11' || file === 'python3.11.orig') {
+                            fileList.push(fullPath.replace('.orig', ''));
+                        }
+                    } catch(e) {}
                 }
-            }
+            } catch(e) {}
             return fileList;
         }
-        
-        const pythons = findPythons(backendsDir);
+        const pythons = [...new Set(findPythons(mlxBackends))]; // Unique paths
         for (const py of pythons) {
-            let origPy = py;
-            let wrapperPy = py;
-            
-            if (!py.endsWith('.orig')) {
-                // Read the file to see if it's already a wrapper
-                const content = fs.readFileSync(py, 'utf8');
-                if (!content.startsWith('#!/bin/bash')) {
-                    origPy = py + '.orig';
-                    fs.renameSync(py, origPy);
-                    console.log(`[+] Renamed python3.11 to python3.11.orig at ${path.dirname(py)}`);
-                } else {
-                    origPy = py + '.orig';
-                }
-            } else {
-                wrapperPy = py.replace('.orig', '');
-            }
-            
-            // Re-sign the .orig binary
-            if (fs.existsSync(origPy)) {
-                try {
-                    cp.execSync(`xattr -cr "${origPy}" 2>/dev/null || true`);
-                    cp.execSync(`codesign --force --options runtime --sign - --entitlements "${entsPath}" "${origPy}"`, { stdio: 'pipe' });
-                    console.log(`[+] Re-signed ${path.basename(origPy)} for Library Validation bypass`);
-                } catch (e) {
-                    console.error(`[-] Failed to sign ${origPy}`);
-                }
-            }
-            
-            // Write the bash wrapper
-            const pyWrapperContent = `#!/bin/bash
-# M5 Ultimate Wrapper for MLX Python
-echo "[M5 Ultimate] Launching Python with DYLD_LIBRARY_PATH injected" >> /tmp/m5_proxy_mlx.log
-
-export DYLD_LIBRARY_PATH="$HOME/.lmstudio/extensions/m5_mlx\${DYLD_LIBRARY_PATH:+:\$DYLD_LIBRARY_PATH}"
-exec "$(dirname "$0")/python3.11.orig" "$@"
-`;
-            fs.writeFileSync(wrapperPy, pyWrapperContent, { mode: 0o755 });
-            console.log(`[+] Installed Python wrapper at ${wrapperPy}`);
+            processBinary(py, false);
         }
     }
 }
 
-function revertWrappers() {
-    const userHome = process.env.REAL_HOME || process.env.HOME || process.env.USERPROFILE;
+function revertBinary(targetBin) {
+    const dir = path.dirname(targetBin);
+    const base = path.basename(targetBin);
+    const origBin = path.join(dir, base + '.orig');
+    const patchedBin = path.join(dir, base + '.patched');
+    const entsXml = path.join(dir, base + '_ents.xml');
+    const dylib = path.join(dir, 'libmetal_interceptor.dylib');
     
-    // 1. Revert lms
-    const llamaDir = path.join(userHome, '.cache/lm-studio/bin');
-    if (fs.existsSync(llamaDir)) {
-        const lmsServer = path.join(llamaDir, 'lms');
-        const lmsOrig = path.join(llamaDir, 'lms.orig');
-        const lmsAne = path.join(llamaDir, 'lms.ane');
-        if (fs.existsSync(lmsOrig)) {
-            fs.renameSync(lmsOrig, lmsServer);
-            console.log("[+] Reverted lms.orig to lms");
-        }
-        if (fs.existsSync(lmsAne)) {
-            fs.unlinkSync(lmsAne);
-            console.log("[+] Removed lms.ane");
-        }
+    if (fs.existsSync(origBin)) {
+        if (fs.existsSync(targetBin)) fs.unlinkSync(targetBin);
+        fs.renameSync(origBin, targetBin);
+        console.log(`[+] Reverted ${base}`);
     }
-    
-    // 2. Revert Python
-    const backendsDir = path.join(userHome, '.lmstudio/extensions/backends');
-    if (fs.existsSync(backendsDir)) {
-        function findPythons(dir, fileList = []) {
-            const files = fs.readdirSync(dir);
-            for (const file of files) {
-                const fullPath = path.join(dir, file);
-                if (fs.statSync(fullPath).isDirectory()) {
-                    findPythons(fullPath, fileList);
-                } else if (file === 'python3.11.orig') {
-                    fileList.push(fullPath);
-                }
-            }
-            return fileList;
-        }
-        
-        const origPythons = findPythons(backendsDir);
-        for (const origPy of origPythons) {
-            const wrapperPy = origPy.replace('.orig', '');
-            if (fs.existsSync(wrapperPy)) {
-                fs.unlinkSync(wrapperPy); // delete wrapper
-            }
-            fs.renameSync(origPy, wrapperPy);
-            console.log(`[+] Reverted ${path.basename(origPy)} to ${path.basename(wrapperPy)}`);
-        }
-    }
+    if (fs.existsSync(patchedBin)) fs.unlinkSync(patchedBin);
+    if (fs.existsSync(entsXml)) fs.unlinkSync(entsXml);
+    if (fs.existsSync(dylib)) fs.unlinkSync(dylib);
 }
 
 if (process.argv.includes('--revert')) {
     console.log("[*] Reverting M5 Ultimate Injection...");
     removeOldAppHooks();
-    revertWrappers();
+    
+    const userHome = process.env.REAL_HOME || process.env.HOME || process.env.USERPROFILE;
+    
+    const llamaBackends = path.join(userHome, '.cache/lm-studio/extensions/backends');
+    if (fs.existsSync(llamaBackends)) {
+        fs.readdirSync(llamaBackends).forEach(d => {
+            revertBinary(path.join(llamaBackends, d, 'llama-server'));
+        });
+    }
+    
+    const mlxBackends = path.join(userHome, '.lmstudio/extensions/backends');
+    if (fs.existsSync(mlxBackends)) {
+        function findPythons(dir, fileList = []) {
+            try {
+                const files = fs.readdirSync(dir);
+                for (const file of files) {
+                    if (file.startsWith('.tmp')) continue;
+                    const fullPath = path.join(dir, file);
+                    try {
+                        const stat = fs.statSync(fullPath);
+                        if (stat.isDirectory()) {
+                            findPythons(fullPath, fileList);
+                        } else if (file === 'python3.11' || file === 'python3.11.orig') {
+                            fileList.push(fullPath.replace('.orig', ''));
+                        }
+                    } catch(e) {}
+                }
+            } catch(e) {}
+            return fileList;
+        }
+        const pythons = [...new Set(findPythons(mlxBackends))];
+        for (const py of pythons) {
+            revertBinary(py);
+        }
+    }
+    
     console.log("=== Revert Complete ===");
     process.exit(0);
 }
 
 removeOldAppHooks();
 deployPayloads();
-installWrappers();
-
 console.log("=== Crack Complete ===");
+
