@@ -8,42 +8,34 @@
 .LSOverride
 Icon
 
-# 2. Build Artifacts & Compiled Binaries (THE HEAVY STUFF)
+# 2. Build Artifacts & Compiled Binaries
 build/
-*.app/
 *.o
-*.dylib
-*.metallib
 *.out
 *.log
-
-# 3. Third-Party Apps & Heavy Dependencies
-lmstd/
-saves/
-node_modules/
-
-# 4. Large Submodules / External Frameworks
-llama.cpp/
-mlx/
-m1n1/
-Lokum-f/
-ANE-main/
-MI/
-insert_dylib/
-system_wide_tests/
-saves/
-payloads/
-
-# 5. Caches
 .cache/
 __pycache__/
 *.pyc
 
-# 6. M5 Ultimate Specific Ignores
+# 3. Third-Party Dependencies
+node_modules/
+
+# 4. Old & Heavy Folders (Do not track these giant archives)
+OLD/lmstd/
+OLD/saves/
+OLD/llama.cpp/
+OLD/mlx/
+OLD/m1n1/
+OLD/ANE-main/
+OLD/MI/
+OLD/insert_dylib/
+OLD/payloads/
+
+# 5. M5 Ultimate Specific Caches
 /tmp/m5_*.log
 /tmp/m5_*.command
 
-# Un-ignore M5 Ultimate App build artifacts so we can commit the compiled app
-!M5UltimateApp/build/
-!M5UltimateApp/build/M5\ Ultimate.app/
-!M5UltimateApp/build/M5\ Ultimate.app/**/*
+# 6. Allow committing specific binaries and apps inside our active project folders
+!M5 Ultimate/M5UltimateApp/build/M5\ Ultimate.app/
+!M5 Ultimate/M5UltimateApp/build/M5\ Ultimate.app/**/*
+!M5 Engines/**/*.dylib

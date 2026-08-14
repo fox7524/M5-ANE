@@ -53,10 +53,11 @@ This research and development initiative relies heavily on the foundational work
 **Foundational Research:**
 * **[maderix](https://github.com/maderix):** Special thanks for the foundational [ANE](https://github.com/maderix/ANE) repository and research, which provided critical technical inspiration and groundwork for the architectural direction of this project.
 
-**Open Source Projects Used In This Project:**
+**Open Source Projects & Tools Used In This Project:**
+* **[LM Studio](https://lmstudio.ai):** For the incredible local LLM GUI and the backend extension architecture we are utilizing to deploy custom engines.
 * **[ANE](https://github.com/maderix/ANE):** For the initial Apple Neural Engine reverse-engineering bridge and hardware communication protocols.
-* **[llama.cpp](https://github.com/ggerganov/llama.cpp):** For the highly optimized GGUF inference backend.
-* **[MLX](https://github.com/ml-explore/mlx):** For the Apple Silicon optimized machine learning array framework.
+* **[llama.cpp](https://github.com/ggerganov/llama.cpp):** For the highly optimized GGUF inference backend which serves as the core for our Heterogeneous Pipeline.
+* **[MLX](https://github.com/ml-explore/mlx):** For the Apple Silicon optimized machine learning array framework utilized in our secondary backend.
 * **[m1n1](https://github.com/AsahiLinux/m1n1):** For the bare-metal hardware discovery and architectural analysis of Apple Silicon.
 
 ---
