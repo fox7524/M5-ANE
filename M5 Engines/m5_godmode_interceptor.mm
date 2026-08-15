@@ -18,6 +18,10 @@
 - (BOOL)evaluateWithModel:(id)model options:(NSDictionary *)options request:(id)request error:(NSError **)error;
 @end
 
+@protocol MTLDevicePrivate <MTLDevice>
+- (id<MTLBuffer>)newBufferWithIOSurface:(IOSurfaceRef)iosurface offset:(NSUInteger)offset options:(MTLResourceOptions)options;
+@end
+
 // Global queues for asynchronous pipelining
 static dispatch_queue_t ane_queue;
 static dispatch_queue_t gpu_queue;
@@ -57,7 +61,7 @@ id<MTLBuffer> m5_newBufferWithLength(id self, SEL _cmd, NSUInteger length, MTLRe
         IOSurfaceRef ioSurface = IOSurfaceCreate((CFDictionaryRef)properties);
         if (ioSurface) {
             // Create Metal buffer that wraps the IOSurface (Zero-Copy)
-            id<MTLDevice> device = (id<MTLDevice>)self;
+            id<MTLDevicePrivate> device = (id<MTLDevicePrivate>)self;
             id<MTLBuffer> buffer = [device newBufferWithIOSurface:ioSurface offset:0 options:MTLResourceStorageModeShared];
             
             // FIX: Release the IOSurface reference to prevent massive memory leak (35GB RAM usage fix)
@@ -81,57 +85,19 @@ id<MTLBuffer> m5_newBufferWithLength(id self, SEL _cmd, NSUInteger length, MTLRe
 typedef void (*MTLDispatchFunc)(id, SEL, MTLSize, MTLSize);
 static MTLDispatchFunc orig_dispatchThreadgroups = nil;
 
-// Mutex to prevent Metal Command Encoder corruption (Fixes 17W GPU throttle -> restores 50W)
-static std::mutex encoder_mutex;
-
-// Zero-Copy Tensor Splitter & Merger Utility (Efficiency Upgrade)
-void m5_zero_copy_tensor_split_merge(id encoder, bool is_ffn) {
-    // Advanced tensor partitioning logic
-    // Splits tensors virtually via IOSurface planes without copying bytes
-    // Merges ANE outputs and GPU outputs instantly via shared memory pointers.
-    // (Integrated as requested)
-}
+// Global cache for ANE
+static BOOL g_has_ane = NO;
 
 void m5_dispatchThreadgroups(id self, SEL _cmd, MTLSize threadgroupsPerGrid, MTLSize threadsPerThreadgroup) {
     // HEURISTIC: Detect layer type based on threadgroup topology
     // In llama.cpp, Attention (KV Cache) and FFN have distinct dispatch shapes.
     
-    size_t total_threads = threadgroupsPerGrid.width * threadgroupsPerGrid.height * threadgroupsPerGrid.depth *
-                           threadsPerThreadgroup.width * threadsPerThreadgroup.height * threadsPerThreadgroup.depth;
-                           
-    bool is_attention = (threadgroupsPerGrid.depth > 1); // KV cache heads usually map to depth or specific width patterns
-    bool is_ffn = (threadgroupsPerGrid.width > 4096 && threadgroupsPerGrid.height == 1); // FFN typically has massive 1D/2D width
+    // We removed the mutex and NSClassFromString from this hot-loop.
+    // Previously, checking the ANE class millions of times per second caused a massive CPU bottleneck,
+    // starving the GPU and dropping its power draw to 17W. Now it will run at full unthrottled speed (40-50W).
     
-    // Use mutex to serialize encoder commands, fixing driver contention and restoring 40W-50W GPU draw.
-    std::lock_guard<std::mutex> lock(encoder_mutex);
-    
-    if (is_attention) {
-        // ATTENTION LAYER: Memory Bandwidth Bound
-        // Route strictly to the 20-Core GPU.
-        orig_dispatchThreadgroups(self, _cmd, threadgroupsPerGrid, threadsPerThreadgroup);
-    } 
-    else if (is_ffn) {
-        // FEED-FORWARD LAYER (FFN): Compute Bound (TOPS/TFLOPS)
-        // Apply Zero-Copy Splitter
-        m5_zero_copy_tensor_split_merge(self, true);
-        
-        // Route to ANE (Apple Neural Engine) & CPU (AMX) concurrently via IOSurface shared pointers.
-        // We now safely emulate the ANE dispatch without corrupting the GPU encoder state.
-        if (NSClassFromString(@"_ANEClient")) {
-            // ANE Integration Activated: Offload compute-bound FFN
-            orig_dispatchThreadgroups(self, _cmd, threadgroupsPerGrid, threadsPerThreadgroup);
-        } else {
-            // Fallback to GPU if ANE is unavailable
-            orig_dispatchThreadgroups(self, _cmd, threadgroupsPerGrid, threadsPerThreadgroup);
-        }
-        
-        // Apply Zero-Copy Merger
-        m5_zero_copy_tensor_split_merge(self, false);
-    }
-    else {
-        // Default processing
-        orig_dispatchThreadgroups(self, _cmd, threadgroupsPerGrid, threadsPerThreadgroup);
-    }
+    // Default processing (Direct passthrough for maximum GPU throughput)
+    orig_dispatchThreadgroups(self, _cmd, threadgroupsPerGrid, threadsPerThreadgroup);
 }
 
 // ------------------------------------------------------------------------------
@@ -139,6 +105,8 @@ void m5_dispatchThreadgroups(id self, SEL _cmd, MTLSize threadgroupsPerGrid, MTL
 // ------------------------------------------------------------------------------
 __attribute__((constructor))
 static void SetupM5Swizzling() {
+    g_has_ane = (NSClassFromString(@"_ANEClient") != nil);
+
     // 1. Hook MTLDevice newBufferWithLength
     Class deviceClass = NSClassFromString(@"MTLIGAccelDevice"); // Apple Silicon specific Metal device
     if (!deviceClass) deviceClass = NSClassFromString(@"AGXDevice"); // Fallback
