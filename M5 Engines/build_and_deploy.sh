@@ -46,9 +46,18 @@ if [ -f "$LMS_NODE" ]; then
     codesign --force --options runtime --sign - --entitlements "$ENT_XML" "$LMS_NODE"
 fi
 
+# Apply the same entitlement to the actual LM Studio apps and helpers just in case
+find "/Applications/LM Studio.app" -type f -name "LM Studio Helper*" -perm +111 -exec codesign --force --options runtime --sign - --entitlements "$ENT_XML" {} \; 2>/dev/null || true
+codesign --force --options runtime --sign - --entitlements "$ENT_XML" "/Applications/LM Studio.app/Contents/MacOS/LM Studio" 2>/dev/null || true
+
+# Define GLOBAL_INTERCEPTOR early so it's not empty!
+GLOBAL_INTERCEPTOR="$HOME/.lmstudio/extensions/backends/m5_godmode_interceptor.dylib"
+cp m5_godmode_interceptor.dylib "$GLOBAL_INTERCEPTOR"
+codesign --force --sign - "$GLOBAL_INTERCEPTOR" || true
+
 # 3. Deploy to LM Studio Native Extension Folder
 # Deploy to ALL official llama.cpp folders to ensure we hijack whichever one LM Studio is using
-for LLAMA_BACKEND_DIR in "$HOME/.cache/lm-studio/extensions/backends/llama.cpp-mac-arm64-apple-metal-advsimd-"*; do
+for LLAMA_BACKEND_DIR in "$HOME/.lmstudio/extensions/backends/llama.cpp-mac-arm64-apple-metal-advsimd-"* "$HOME/.cache/lm-studio/extensions/backends/llama.cpp-mac-arm64-apple-metal-advsimd-"*; do
     if [ -d "$LLAMA_BACKEND_DIR" ]; then
         echo "🚀 Deploying to Native LM Studio Backend: $LLAMA_BACKEND_DIR"
         
@@ -64,9 +73,9 @@ for LLAMA_BACKEND_DIR in "$HOME/.cache/lm-studio/extensions/backends/llama.cpp-m
                 cp "$NODE_ENGINE" "${NODE_ENGINE}.orig"
             fi
             
-            # Inject dylib
+            # Inject dylib (use absolute path to avoid dlopen rpath issues)
             echo "   -> Injecting God-Mode into $NODE_ENGINE"
-            "../M5 Ultimate/M5UltimateApp/insert_dylib" --inplace --overwrite --all-yes @loader_path/m5_godmode_interceptor.dylib "$NODE_ENGINE" || true
+            "../M5 Ultimate/M5UltimateApp/insert_dylib" --inplace --overwrite --all-yes "$GLOBAL_INTERCEPTOR" "$NODE_ENGINE" || true
             codesign --force --sign - "$NODE_ENGINE" || true
         fi
         
@@ -77,7 +86,7 @@ for LLAMA_BACKEND_DIR in "$HOME/.cache/lm-studio/extensions/backends/llama.cpp-m
                 cp "$LIBLLAMA" "${LIBLLAMA}.orig"
             fi
             echo "   -> Injecting God-Mode into $LIBLLAMA"
-            "../M5 Ultimate/M5UltimateApp/insert_dylib" --inplace --overwrite --all-yes @loader_path/m5_godmode_interceptor.dylib "$LIBLLAMA" || true
+            "../M5 Ultimate/M5UltimateApp/insert_dylib" --inplace --overwrite --all-yes "$GLOBAL_INTERCEPTOR" "$LIBLLAMA" || true
             codesign --force --sign - "$LIBLLAMA" || true
         fi
 
@@ -98,11 +107,8 @@ echo "🎉 Deployment Complete! You can now select the official 'llama.cpp' in L
 
 # 4. MLX Engine God-Mode Injection
 echo "🚀 Injecting God-Mode into MLX Engine Python & Node Environment..."
-GLOBAL_INTERCEPTOR="$HOME/.cache/lm-studio/extensions/backends/m5_godmode_interceptor.dylib"
-cp m5_godmode_interceptor.dylib "$GLOBAL_INTERCEPTOR"
-codesign --force --sign - "$GLOBAL_INTERCEPTOR" || true
 
-for MLX_PYTHON in "$HOME/.cache/lm-studio/extensions/backends/vendor/_amphibian/app-mlx-generate-mac26-arm64"*"/bin/python"; do
+for MLX_PYTHON in "$HOME/.lmstudio/extensions/backends/vendor/_amphibian/app-mlx-generate-mac26-arm64"*"/bin/python" "$HOME/.cache/lm-studio/extensions/backends/vendor/_amphibian/app-mlx-generate-mac26-arm64"*"/bin/python"; do
     if [ -f "$MLX_PYTHON" ]; then
         echo "   -> Patching $MLX_PYTHON"
         
@@ -118,14 +124,26 @@ for MLX_PYTHON in "$HOME/.cache/lm-studio/extensions/backends/vendor/_amphibian/
 done
 
 # We also must resign the actual python binary that the wrapper points to!
-for MLX_PYTHON_BIN in "$HOME/.cache/lm-studio/extensions/backends/vendor/_amphibian/cpython3.11-mac-arm64"*"/bin/python3.11"; do
+for MLX_PYTHON_BIN in "$HOME/.lmstudio/extensions/backends/vendor/_amphibian/"*"/bin/python3"* "$HOME/.cache/lm-studio/extensions/backends/vendor/_amphibian/"*"/bin/python3"*; do
     if [ -f "$MLX_PYTHON_BIN" ]; then
-        echo "   -> Bypassing Library Validation for MLX Python ($MLX_PYTHON_BIN)..."
-        codesign --force --options runtime --sign - --entitlements "$ENT_XML" "$MLX_PYTHON_BIN"
+        # Check if it's a real executable, not a script/wrapper
+        if file "$MLX_PYTHON_BIN" | grep -q "Mach-O"; then
+            echo "   -> Bypassing Library Validation for MLX Python ($MLX_PYTHON_BIN)..."
+            codesign --force --options runtime --sign - --entitlements "$ENT_XML" "$MLX_PYTHON_BIN"
+        fi
     fi
 done
 
-for MLX_BACKEND_DIR in "$HOME/.cache/lm-studio/extensions/backends/mlx-llm-mac-arm64-apple-metal-nax-advsimd-"*; do
+for MLX_PYTHON_BIN_ in "$HOME/.lmstudio/extensions/backends/vendor/_amphibian/"*"/bin/python_"*; do
+    if [ -f "$MLX_PYTHON_BIN_" ]; then
+        if file "$MLX_PYTHON_BIN_" | grep -q "Mach-O"; then
+            echo "   -> Bypassing Library Validation for MLX Python ($MLX_PYTHON_BIN_)..."
+            codesign --force --options runtime --sign - --entitlements "$ENT_XML" "$MLX_PYTHON_BIN_"
+        fi
+    fi
+done
+
+for MLX_BACKEND_DIR in "$HOME/.lmstudio/extensions/backends/mlx-llm-mac-arm64-apple-metal-nax-advsimd-"* "$HOME/.cache/lm-studio/extensions/backends/mlx-llm-mac-arm64-apple-metal-nax-advsimd-"*; do
     if [ -d "$MLX_BACKEND_DIR" ]; then
         cp m5_godmode_interceptor.dylib "$MLX_BACKEND_DIR/"
         
@@ -135,7 +153,11 @@ for MLX_BACKEND_DIR in "$HOME/.cache/lm-studio/extensions/backends/mlx-llm-mac-a
                 cp "$MLX_NODE" "${MLX_NODE}.orig"
             fi
             echo "   -> Injecting God-Mode into $MLX_NODE"
-            "../M5 Ultimate/M5UltimateApp/insert_dylib" --inplace --overwrite --all-yes @loader_path/m5_godmode_interceptor.dylib "$MLX_NODE" || true
+            "../M5 Ultimate/M5UltimateApp/insert_dylib" --inplace --overwrite --all-yes "$GLOBAL_INTERCEPTOR" "$MLX_NODE" || true
+            
+            # Fix Python linking issue in MLX node by providing an rpath to the local python framework if missing
+            install_name_tool -add_rpath "$HOME/.lmstudio/extensions/backends/vendor/_amphibian/cpython3.11-mac-arm64@10/lib" "$MLX_NODE" 2>/dev/null || true
+            
             codesign --force --sign - "$MLX_NODE" || true
         fi
         
@@ -145,7 +167,10 @@ for MLX_BACKEND_DIR in "$HOME/.cache/lm-studio/extensions/backends/mlx-llm-mac-a
                 cp "$MLX_LIB" "${MLX_LIB}.orig"
             fi
             echo "   -> Injecting God-Mode into $MLX_LIB"
-            "../M5 Ultimate/M5UltimateApp/insert_dylib" --inplace --overwrite --all-yes @loader_path/m5_godmode_interceptor.dylib "$MLX_LIB" || true
+            "../M5 Ultimate/M5UltimateApp/insert_dylib" --inplace --overwrite --all-yes "$GLOBAL_INTERCEPTOR" "$MLX_LIB" || true
+            
+            install_name_tool -add_rpath "$HOME/.lmstudio/extensions/backends/vendor/_amphibian/cpython3.11-mac-arm64@10/lib" "$MLX_LIB" 2>/dev/null || true
+            
             codesign --force --sign - "$MLX_LIB" || true
         fi
     fi
