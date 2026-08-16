@@ -7,6 +7,10 @@
 #include <string>
 #include <dispatch/dispatch.h>
 #include <sys/time.h>
+#include <sys/socket.h>
+#include <sys/un.h>
+#include <unistd.h>
+#include <errno.h>
 
 // ==============================================================================
 // M5 ULTIMATE GOD-MODE INTERCEPTOR
@@ -102,6 +106,58 @@ double m5_get_time_ms() {
     return (tv.tv_sec * 1000.0) + (tv.tv_usec / 1000.0);
 }
 
+// ANE Workload Struct
+#pragma pack(push, 1)
+struct ANEWorkload {
+    uint32_t command_type; // 1 = compute
+    uint32_t grid_width;
+    uint32_t grid_height;
+    uint32_t grid_depth;
+    uint32_t thread_width;
+    uint32_t thread_height;
+    uint32_t thread_depth;
+    double timestamp;
+};
+#pragma pack(pop)
+
+// Unix Domain Socket Client for ANE Daemon
+bool send_ane_workload_sync(const ANEWorkload& workload) {
+    int sock = socket(AF_UNIX, SOCK_STREAM, 0);
+    if (sock < 0) {
+        perror("[M5 Ultimate] Socket creation failed");
+        return false;
+    }
+    
+    struct sockaddr_un addr;
+    memset(&addr, 0, sizeof(addr));
+    addr.sun_family = AF_UNIX;
+    strncpy(addr.sun_path, "/tmp/m5_ane_daemon.sock", sizeof(addr.sun_path) - 1);
+    
+    if (connect(sock, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
+        // perror("[M5 Ultimate] Connection to ANE daemon failed");
+        close(sock);
+        return false;
+    }
+    
+    if (send(sock, &workload, sizeof(workload), 0) < 0) {
+        perror("[M5 Ultimate] Send failed");
+        close(sock);
+        return false;
+    }
+    
+    // wait for response
+    uint32_t response = 0;
+    int bytes_received = recv(sock, &response, sizeof(response), 0);
+    if (bytes_received <= 0) {
+        perror("[M5 Ultimate] Receive failed or connection closed");
+        close(sock);
+        return false;
+    }
+    
+    close(sock);
+    return response == 1; // Assuming 1 means success
+}
+
 void m5_dispatchThreadgroups(id self, SEL _cmd, MTLSize threadgroupsPerGrid, MTLSize threadsPerThreadgroup) {
     if (g_m5_profiling_tokens < 5) {
         // Measure execution time
@@ -129,7 +185,28 @@ void m5_dispatchThreadgroups(id self, SEL _cmd, MTLSize threadgroupsPerGrid, MTL
         // GPU computes its share
         orig_dispatchThreadgroups(self, _cmd, splitGrid, threadsPerThreadgroup);
         
-        // ANE computes the remainder (to be implemented)
+        // ANE computes the remainder
+        MTLSize aneGrid = threadgroupsPerGrid;
+        aneGrid.height = threadgroupsPerGrid.height - splitGrid.height;
+        
+        if (aneGrid.height > 0) {
+            ANEWorkload workload;
+            workload.command_type = 1;
+            workload.grid_width = (uint32_t)aneGrid.width;
+            workload.grid_height = (uint32_t)aneGrid.height;
+            workload.grid_depth = (uint32_t)aneGrid.depth;
+            workload.thread_width = (uint32_t)threadsPerThreadgroup.width;
+            workload.thread_height = (uint32_t)threadsPerThreadgroup.height;
+            workload.thread_depth = (uint32_t)threadsPerThreadgroup.depth;
+            workload.timestamp = m5_get_time_ms();
+            
+            // Dispatch to ANE daemon
+            bool success = send_ane_workload_sync(workload);
+            if (!success) {
+                // If ANE fails, fallback to GPU for the remainder
+                orig_dispatchThreadgroups(self, _cmd, aneGrid, threadsPerThreadgroup);
+            }
+        }
     }
 }
 
